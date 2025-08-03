@@ -9,10 +9,12 @@ import { SummaryCard } from './SummaryCard';
 import { ReminderCard } from './ReminderCard';
 import { MilkIcon } from './icons';
 import { Droplets } from 'lucide-react';
+import { EditDeliveryDialog } from './EditDeliveryDialog';
 
 export default function Dashboard() {
   const [isMounted, setIsMounted] = useState(false);
   const [records, setRecords] = useState<DeliveryRecord[]>([]);
+  const [editingRecord, setEditingRecord] = useState<DeliveryRecord | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -38,6 +40,17 @@ export default function Dashboard() {
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
     setRecords(sortedRecords);
+  };
+
+  const handleUpdateRecord = (updatedRecord: DeliveryRecord) => {
+    const updatedRecords = records.map((r) =>
+      r.id === updatedRecord.id ? updatedRecord : r
+    );
+    const sortedRecords = updatedRecords.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    setRecords(sortedRecords);
+    setEditingRecord(null);
   };
 
   const handleRemoveRecord = (id: string) => {
@@ -101,10 +114,17 @@ export default function Dashboard() {
               <ReminderCard daysWithoutDelivery={summary.daysWithoutDelivery} />
             </div>
             <div className="lg:col-span-3">
-              <DeliveriesTable records={records} onRemoveRecord={handleRemoveRecord} />
+              <DeliveriesTable records={records} onRemoveRecord={handleRemoveRecord} onEditRecord={setEditingRecord} />
             </div>
         </div>
       </main>
+      {editingRecord && (
+        <EditDeliveryDialog
+          record={editingRecord}
+          onUpdateRecord={handleUpdateRecord}
+          onOpenChange={(isOpen) => !isOpen && setEditingRecord(null)}
+        />
+      )}
     </div>
   );
 }

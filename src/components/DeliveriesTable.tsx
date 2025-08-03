@@ -2,7 +2,7 @@
 
 import type { DeliveryRecord } from '@/lib/types';
 import { format } from 'date-fns';
-import { Trash2, Droplets } from 'lucide-react';
+import { Trash2, Droplets, Pencil } from 'lucide-react';
 import { MilkIcon } from './icons';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -24,9 +24,10 @@ import {
 type DeliveriesTableProps = {
   records: DeliveryRecord[];
   onRemoveRecord: (id: string) => void;
+  onEditRecord: (record: DeliveryRecord) => void;
 };
 
-export function DeliveriesTable({ records, onRemoveRecord }: DeliveriesTableProps) {
+export function DeliveriesTable({ records, onRemoveRecord, onEditRecord }: DeliveriesTableProps) {
   return (
     <Card>
       <CardHeader>
@@ -41,7 +42,7 @@ export function DeliveriesTable({ records, onRemoveRecord }: DeliveriesTableProp
                 <TableHead>Date</TableHead>
                 <TableHead>Item</TableHead>
                 <TableHead className="text-right">Quantity</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -57,6 +58,9 @@ export function DeliveriesTable({ records, onRemoveRecord }: DeliveriesTableProp
                     </TableCell>
                     <TableCell className="text-right">{record.quantity.toFixed(2)} L</TableCell>
                     <TableCell className="text-right">
+                       <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => onEditRecord(record)}>
+                          <Pencil className="h-4 w-4" />
+                       </Button>
                        <AlertDialog>
                         <AlertDialogTrigger asChild>
                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
@@ -83,7 +87,7 @@ export function DeliveriesTable({ records, onRemoveRecord }: DeliveriesTableProp
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
+                  <TableCell colSpan={5} className="h-24 text-center">
                     No deliveries recorded yet.
                   </TableCell>
                 </TableRow>
