@@ -1,5 +1,27 @@
-# Firebase Studio
+# HydroDairy Tracker
 
-This is a NextJS starter in Firebase Studio.
+This is a Next.js web application that helps you track your daily milk and water deliveries.
 
-To get started, take a look at src/app/page.tsx.
+## Features
+
+- **Dashboard**: A central dashboard to view and manage all your delivery data.
+- **Record Deliveries**: Easily add new delivery records for milk and water with date and quantity.
+- **Track History**: View all past deliveries in a clear, organized table. You can also edit or delete entries.
+- **Summary Insights**: Get a quick overview of your consumption with statistics like:
+  - Total quantity of milk and water delivered.
+  - Number of days since your last delivery for each item.
+  - A calculated total bill for both milk and water based on set prices.
+- **AI-Powered Reminders**: Get smart reminders to re-order milk or water, based on your consumption patterns and delivery schedule.
+
+## Getting Started
+
+To get started with this application, you can run it locally using the following commands:
+
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:9002](http://localhost:9002) with your browser to see the result.
+
+You can start by adding new delivery records using the form on the dashboard. The data will be saved to your browser's local storage.
