@@ -82,14 +82,14 @@ export default function Dashboard() {
             title="Total Milk Delivered"
             value={`${summary.totals.milk.toFixed(2)} L`}
             icon={<MilkIcon className="h-6 w-6 text-muted-foreground" />}
-            footerText={`Bill: PKR ${summary.bill.milkBill.toFixed(2)}`}
+            footerText={`Bill: ${summary.bill.milkBill.toFixed(2)} PKR`}
             className="bg-accent/20"
           />
           <SummaryCard
             title="Total Water Delivered"
             value={`${summary.totals.water.toFixed(2)} L`}
             icon={<Droplets className="h-6 w-6 text-muted-foreground" />}
-            footerText={`Bill: PKR ${summary.bill.waterBill.toFixed(2)}`}
+            footerText={`Bill: ${summary.bill.waterBill.toFixed(2)} PKR`}
             className="bg-primary/20"
           />
           <SummaryCard
