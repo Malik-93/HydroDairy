@@ -33,7 +33,7 @@ const formSchema = z.object({
 
 type EditDeliveryDialogProps = {
   record: DeliveryRecord;
-  onUpdateRecord: (record: DeliveryRecord) => void;
+  onUpdateRecord: (record: DeliveryRecord) => Promise<void>;
   onOpenChange: (isOpen: boolean) => void;
 }
 
@@ -56,13 +56,13 @@ export function EditDeliveryDialog({ record, onUpdateRecord, onOpenChange }: Edi
     });
   }, [record, form]);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     const updatedRecord = {
       ...record,
       ...values,
       date: values.date.toISOString(),
     };
-    onUpdateRecord(updatedRecord);
+    await onUpdateRecord(updatedRecord);
     toast({
       title: "Success!",
       description: `Updated delivery record.`,
@@ -161,7 +161,9 @@ export function EditDeliveryDialog({ record, onUpdateRecord, onOpenChange }: Edi
                 />
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                    <Button type="submit" className="transition-all duration-300">Save Changes</Button>
+                    <Button type="submit" className="transition-all duration-300" disabled={form.formState.isSubmitting}>
+                      {form.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
+                    </Button>
                 </DialogFooter>
             </form>
             </Form>

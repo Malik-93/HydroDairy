@@ -31,7 +31,7 @@ const formSchema = z.object({
 });
 
 type DeliveryFormProps = {
-  onAddRecord: (record: Omit<DeliveryRecord, 'id'>) => void;
+  onAddRecord: (record: Omit<DeliveryRecord, 'id'>) => Promise<void>;
 }
 
 export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
@@ -45,12 +45,12 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     const newRecord = {
       ...values,
       date: values.date.toISOString(),
     };
-    onAddRecord(newRecord);
+    await onAddRecord(newRecord);
     toast({
       title: "Success!",
       description: `Added ${values.quantity}L of ${values.item}.`,
@@ -145,7 +145,9 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full transition-all duration-300">Add Record</Button>
+            <Button type="submit" className="w-full transition-all duration-300" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? 'Adding...' : 'Add Record'}
+            </Button>
           </form>
         </Form>
       </CardContent>

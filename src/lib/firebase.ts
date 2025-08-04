@@ -1,6 +1,7 @@
 'use client';
 
 import { initializeApp, getApp, getApps } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   projectId: 'new-prototype-qzb8x',
@@ -13,5 +14,6 @@ const firebaseConfig = {
 };
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-export { app };
+export { app, db };
