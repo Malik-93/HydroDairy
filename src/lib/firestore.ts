@@ -40,17 +40,19 @@ export const getDeliveryRecords = async (): Promise<DeliveryRecord[]> => {
 
 export const addDeliveryRecord = async (record: Omit<DeliveryRecord, 'id'>) => {
   const docRef = await addDoc(collection(db, DELIVERY_RECORDS_COLLECTION), {
-    ...record,
     date: Timestamp.fromDate(new Date(record.date)),
+    item: record.item,
+    quantity: record.quantity,
   });
   return docRef.id;
 };
 
 export const updateDeliveryRecord = async (record: DeliveryRecord) => {
   const docRef = doc(db, DELIVERY_RECORDS_COLLECTION, record.id);
+  const { id, ...dataToUpdate } = record;
   await updateDoc(docRef, {
-    ...record,
-    date: Timestamp.fromDate(new Date(record.date)),
+    ...dataToUpdate,
+    date: Timestamp.fromDate(new Date(dataToUpdate.date)),
   });
 };
 
