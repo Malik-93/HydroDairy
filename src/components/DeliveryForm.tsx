@@ -50,12 +50,20 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
       ...values,
       date: values.date.toISOString(),
     };
-    await onAddRecord(newRecord);
-    toast({
-      title: "Success!",
-      description: `Added ${values.quantity}L of ${values.item}.`,
-    });
-    form.reset();
+    try {
+      await onAddRecord(newRecord);
+      toast({
+        title: "Success!",
+        description: `Added ${values.quantity}L of ${values.item}.`,
+      });
+      form.reset();
+    } catch (error) {
+       toast({
+          variant: "destructive",
+          title: "Error adding record",
+          description: "Could not save the new delivery record.",
+       });
+    }
   }
 
   return (
