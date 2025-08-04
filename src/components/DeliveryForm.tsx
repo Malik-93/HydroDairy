@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { format } from "date-fns"
 import { CalendarIcon, Droplets } from "lucide-react"
+import { useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -39,11 +40,19 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: new Date(),
       item: "milk",
       quantity: 1,
     },
   });
+
+  useEffect(() => {
+    form.reset({
+      date: new Date(),
+      item: "milk",
+      quantity: 1,
+    })
+  }, [form])
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const newRecord = {
@@ -56,7 +65,11 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
         title: "Success!",
         description: `Added ${values.quantity}L of ${values.item}.`,
       });
-      form.reset();
+      form.reset({
+        date: new Date(),
+        item: "milk",
+        quantity: 1
+      });
       // Manually trigger revalidation to clear the form state
       form.trigger();
     } catch (error) {
@@ -155,7 +168,7 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full transition-all duration-300" disabled={form.formState.isSubmitting}>
+            <Button type="submit" className="w-full transition-all duration-300" disabled={!form.formState.isDirty || form.formState.isSubmitting}>
               {form.formState.isSubmitting ? 'Adding...' : 'Add Record'}
             </Button>
           </form>
