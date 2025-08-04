@@ -57,11 +57,13 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
         description: `Added ${values.quantity}L of ${values.item}.`,
       });
       form.reset();
+      // Manually trigger revalidation to clear the form state
+      form.trigger();
     } catch (error) {
        toast({
           variant: "destructive",
           title: "Error adding record",
-          description: "Could not save the new delivery record.",
+          description: "Could not save the new delivery record. Please check the console for more details.",
        });
     }
   }

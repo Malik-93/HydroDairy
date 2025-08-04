@@ -46,21 +46,12 @@ export default function Dashboard() {
   }, [toast]);
 
   const handleAddRecord = async (newRecord: Omit<DeliveryRecord, 'id'>) => {
-    try {
-      const newId = await addDeliveryRecord(newRecord);
-      const recordWithId = { ...newRecord, id: newId };
-      const sortedRecords = [...records, recordWithId].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
-      setRecords(sortedRecords);
-    } catch (error) {
-       console.error("Error adding record: ", error);
-       toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to add the new delivery record.",
-       });
-    }
+    const newId = await addDeliveryRecord(newRecord);
+    const recordWithId = { ...newRecord, id: newId };
+    const sortedRecords = [...records, recordWithId].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    setRecords(sortedRecords);
   };
 
   const handleUpdateRecord = async (updatedRecord: DeliveryRecord) => {
@@ -88,7 +79,8 @@ export default function Dashboard() {
     try {
       await deleteDeliveryRecord(id);
       setRecords(records.filter((record) => record.id !== id));
-    } catch (error) {
+    } catch (error)
+    {
       console.error("Error deleting record: ", error);
       toast({
          variant: "destructive",
