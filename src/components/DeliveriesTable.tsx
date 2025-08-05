@@ -56,7 +56,7 @@ export function DeliveriesTable({ records, onRemoveRecord, onEditRecord }: Deliv
                         {record.item}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">{record.quantity.toFixed(2)} L</TableCell>
+                    <TableCell className="text-right">{`${record.quantity.toFixed(2)} (${record.item === 'milk' ? 'KG' : 'Bottels'})`} </TableCell>
                     <TableCell className="text-right">
                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => onEditRecord(record)}>
                           <Pencil className="h-4 w-4" />

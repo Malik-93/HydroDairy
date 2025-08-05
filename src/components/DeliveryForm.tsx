@@ -160,7 +160,7 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
               name="quantity"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Quantity (Liters)</FormLabel>
+                  <FormLabel>Quantity (KG/Bottels)</FormLabel>
                   <FormControl>
                     <Input type="number" step="0.1" placeholder="e.g., 1.5" {...field} />
                   </FormControl>

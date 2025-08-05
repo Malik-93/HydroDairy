@@ -33,8 +33,8 @@ export function ReminderCard({ daysWithoutDelivery }: ReminderCardProps) {
   const form = useForm<z.infer<typeof reminderSchema>>({
     resolver: zodResolver(reminderSchema),
     defaultValues: {
-      deliverySchedule: "Daily delivery for milk, twice a week for water (Monday, Thursday).",
-      consumptionPatterns: "We consume about 1.5L of milk and 4L of water per day.",
+      deliverySchedule: "Daily delivery for milk, twice a week for water (Monday, Friday).",
+      consumptionPatterns: "We consume about 1KG of milk daily and bottels as per needed twice a week.",
     },
   });
 
