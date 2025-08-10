@@ -134,7 +134,7 @@ export default function Dashboard() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6 justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">HydroDairy Tracker</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Household Tracker</h1>
         <Link href="/settings">
           <Button variant="outline" size="icon">
             <Settings className="h-4 w-4" />

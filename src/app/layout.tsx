@@ -3,8 +3,8 @@ import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'HydroDairy Tracker',
-  description: 'Track your milk and water deliveries with ease.',
+  title: 'Household Tracker',
+  description: 'Track your household services with ease.',
 };
 
 export default function RootLayout({
