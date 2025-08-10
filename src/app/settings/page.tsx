@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { DEFAULT_RATES } from '@/lib/constants';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 const ratesSchema = z.object({
   milk: z.coerce.number().min(0, "Rate must be positive"),
@@ -22,6 +23,11 @@ const ratesSchema = z.object({
   'house-cleaning': z.coerce.number().min(0, "Rate must be positive"),
   gardener: z.coerce.number().min(0, "Rate must be positive"),
 });
+
+const monthlyRatesSchema = z.object({
+    houseCleaningMonthly: z.coerce.number().min(0, "Salary must be positive"),
+    gardenerMonthly: z.coerce.number().min(0, "Salary must be positive"),
+})
 
 export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -32,12 +38,24 @@ export default function SettingsPage() {
     defaultValues: DEFAULT_RATES,
   });
 
+  const monthlyForm = useForm<z.infer<typeof monthlyRatesSchema>>({
+    resolver: zodResolver(monthlyRatesSchema),
+    defaultValues: {
+        houseCleaningMonthly: DEFAULT_RATES['house-cleaning'] * 26,
+        gardenerMonthly: DEFAULT_RATES.gardener * 4,
+    }
+  })
+
   useEffect(() => {
     async function fetchRates() {
       try {
         const rates = await getRates();
         if (rates) {
           form.reset(rates);
+          monthlyForm.reset({
+            houseCleaningMonthly: rates['house-cleaning'] * 26,
+            gardenerMonthly: rates.gardener * 4
+          })
         }
       } catch (error) {
         toast({
@@ -50,7 +68,17 @@ export default function SettingsPage() {
       }
     }
     fetchRates();
-  }, [form, toast]);
+  }, [form, monthlyForm, toast]);
+
+  const handleMonthlyChange = (field: 'houseCleaningMonthly' | 'gardenerMonthly', value: number) => {
+      if (field === 'houseCleaningMonthly') {
+          const perVisitRate = value > 0 ? value / 26 : 0;
+          form.setValue('house-cleaning', perVisitRate, { shouldDirty: true });
+      } else if (field === 'gardenerMonthly') {
+          const perVisitRate = value > 0 ? value / 4 : 0;
+          form.setValue('gardener', perVisitRate, { shouldDirty: true });
+      }
+  };
 
   async function onSubmit(values: z.infer<typeof ratesSchema>) {
     try {
@@ -59,6 +87,7 @@ export default function SettingsPage() {
         title: 'Success!',
         description: 'Service rates have been updated successfully.',
       });
+      form.reset(values, { keepDirty: false });
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -118,34 +147,78 @@ export default function SettingsPage() {
                         </FormItem>
                     )}
                     />
-                    <FormField
-                    control={form.control}
-                    name="house-cleaning"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>House Cleaning (per Visit)</FormLabel>
-                        <FormControl>
-                            <Input type="number" step="0.01" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                    control={form.control}
-                    name="gardener"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Gardener (per Visit)</FormLabel>
-                        <FormControl>
-                            <Input type="number" step="0.01" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
                 </div>
-                <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                
+                <Separator/>
+
+                <Form {...monthlyForm}>
+                    <div className="space-y-4">
+                        <CardTitle className="text-xl">Monthly Salaries</CardTitle>
+                        <CardDescription>Calculate per-visit rates from monthly salaries.</CardDescription>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+                            <FormField
+                                control={monthlyForm.control}
+                                name="houseCleaningMonthly"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>House Cleaning Monthly Salary</FormLabel>
+                                    <FormControl>
+                                        <Input type="number" {...field} onChange={(e) => {
+                                            field.onChange(e);
+                                            handleMonthlyChange('houseCleaningMonthly', parseFloat(e.target.value) || 0)
+                                        }}/>
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                            control={form.control}
+                            name="house-cleaning"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>House Cleaning (per Visit)</FormLabel>
+                                <FormControl>
+                                    <Input type="number" step="0.01" {...field} readOnly className="bg-muted"/>
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                            <FormField
+                                control={monthlyForm.control}
+                                name="gardenerMonthly"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Gardener Monthly Salary</FormLabel>
+                                    <FormControl>
+                                        <Input type="number" {...field} onChange={(e) => {
+                                            field.onChange(e);
+                                            handleMonthlyChange('gardenerMonthly', parseFloat(e.target.value) || 0)
+                                        }}/>
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                            control={form.control}
+                            name="gardener"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Gardener (per Visit)</FormLabel>
+                                <FormControl>
+                                    <Input type="number" step="0.01" {...field} readOnly className="bg-muted"/>
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                        </div>
+                    </div>
+                </Form>
+
+                <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || !form.formState.isDirty}>
                   {form.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
                 </Button>
               </form>
