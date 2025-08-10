@@ -121,14 +121,14 @@ export default function Dashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-8">
           <SummaryCard
             title="Total Milk Delivered"
-            value={`${summary.totals.milk.toFixed(2)} L`}
+            value={`${summary.totals.milk.toFixed(2)} (KG)`}
             icon={<MilkIcon className="h-6 w-6 text-muted-foreground" />}
             footerText={`${summary.bill.milkBill.toFixed(2)} PKR`}
             className="bg-accent/20"
           />
           <SummaryCard
             title="Total Water Delivered"
-            value={`${summary.totals.water.toFixed(2)} L`}
+            value={`${summary.totals.water.toFixed(2)} (Bottels)`}
             icon={<Droplets className="h-6 w-6 text-muted-foreground" />}
             footerText={`${summary.bill.waterBill.toFixed(2)} PKR`}
             className="bg-primary/20"
