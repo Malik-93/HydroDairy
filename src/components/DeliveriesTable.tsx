@@ -19,12 +19,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 type DeliveriesTableProps = {
   records: DeliveryRecord[];
   onRemoveRecord: (id: string) => void;
   onEditRecord: (record: DeliveryRecord) => void;
+  filter: string;
+  onFilterChange: (value: string) => void;
 };
 
 const getItemIcon = (item: DeliveryRecord['item']) => {
@@ -42,12 +46,28 @@ const getItemIcon = (item: DeliveryRecord['item']) => {
   }
 }
 
-export function DeliveriesTable({ records, onRemoveRecord, onEditRecord }: DeliveriesTableProps) {
+export function DeliveriesTable({ records, onRemoveRecord, onEditRecord, filter, onFilterChange }: DeliveriesTableProps) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Delivery History</CardTitle>
-        <CardDescription>A log of all your past deliveries and services.</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+            <CardTitle>Delivery History</CardTitle>
+            <CardDescription>A log of all your past deliveries and services.</CardDescription>
+        </div>
+        <div className="w-48">
+            <Select value={filter} onValueChange={onFilterChange}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Filter by item..." />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All Items</SelectItem>
+                    <SelectItem value="milk">Milk</SelectItem>
+                    <SelectItem value="water">Water</SelectItem>
+                    <SelectItem value="house-cleaning">House Cleaning</SelectItem>
+                    <SelectItem value="gardener">Gardener</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="border rounded-md">
@@ -109,7 +129,7 @@ export function DeliveriesTable({ records, onRemoveRecord, onEditRecord }: Deliv
               ) : (
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center">
-                    No deliveries recorded yet.
+                    No deliveries recorded for this filter.
                   </TableCell>
                 </TableRow>
               )}

@@ -28,6 +28,7 @@ export default function Dashboard() {
   const [editingRecord, setEditingRecord] = useState<DeliveryRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [rates, setRates] = useState<Rates>(DEFAULT_RATES);
+  const [itemFilter, setItemFilter] = useState<string>('all');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -101,6 +102,13 @@ export default function Dashboard() {
     }
   };
   
+  const filteredRecords = useMemo(() => {
+    if (itemFilter === 'all') {
+      return records;
+    }
+    return records.filter((record) => record.item === itemFilter);
+  }, [records, itemFilter]);
+  
   const summary = useMemo(() => {
     if (!isMounted) {
         return {
@@ -172,7 +180,13 @@ export default function Dashboard() {
               <ReminderCard daysWithoutDelivery={summary.daysWithoutDelivery} />
             </div>
             <div className="lg:col-span-3">
-              <DeliveriesTable records={records} onRemoveRecord={handleRemoveRecord} onEditRecord={setEditingRecord} />
+              <DeliveriesTable 
+                records={filteredRecords} 
+                onRemoveRecord={handleRemoveRecord} 
+                onEditRecord={setEditingRecord}
+                filter={itemFilter}
+                onFilterChange={setItemFilter}
+              />
             </div>
         </div>
       </main>
