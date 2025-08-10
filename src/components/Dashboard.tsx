@@ -1,48 +1,59 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import type { DeliveryRecord } from '@/lib/types';
-import { calculateTotals, calculateBill, calculateDaysWithoutDelivery } from '@/lib/calculations';
+import type { DeliveryRecord, Rates } from '@/lib/types';
+import { calculateTotals, calculateBill } from '@/lib/calculations';
 import {
   getDeliveryRecords,
   addDeliveryRecord,
   updateDeliveryRecord,
   deleteDeliveryRecord,
+  getRates,
 } from '@/lib/firestore';
 import { DeliveryForm } from './DeliveryForm';
 import { DeliveriesTable } from './DeliveriesTable';
 import { SummaryCard } from './SummaryCard';
 import { ReminderCard } from './ReminderCard';
 import { MilkIcon } from './icons';
-import { Droplets, Home, Flower } from 'lucide-react';
+import { Droplets, Home, Flower, Settings } from 'lucide-react';
 import { EditDeliveryDialog } from './EditDeliveryDialog';
 import { useToast } from '@/hooks/use-toast';
+import { DEFAULT_RATES } from '@/lib/constants';
+import Link from 'next/link';
+import { Button } from './ui/button';
 
 export default function Dashboard() {
   const [isMounted, setIsMounted] = useState(false);
   const [records, setRecords] = useState<DeliveryRecord[]>([]);
   const [editingRecord, setEditingRecord] = useState<DeliveryRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [rates, setRates] = useState<Rates>(DEFAULT_RATES);
   const { toast } = useToast();
 
   useEffect(() => {
     setIsMounted(true);
-    const fetchRecords = async () => {
+    const fetchInitialData = async () => {
       try {
-        const fetchedRecords = await getDeliveryRecords();
+        const [fetchedRecords, fetchedRates] = await Promise.all([
+          getDeliveryRecords(),
+          getRates(),
+        ]);
         setRecords(fetchedRecords);
+        if (fetchedRates) {
+          setRates(fetchedRates);
+        }
       } catch (error) {
-        console.error("Failed to fetch records from Firestore", error);
+        console.error("Failed to fetch data from Firestore", error);
         toast({
           variant: "destructive",
           title: "Error fetching data",
-          description: "Could not load delivery records from the database.",
+          description: "Could not load delivery records or rates from the database.",
         });
       } finally {
         setIsLoading(false);
       }
     };
-    fetchRecords();
+    fetchInitialData();
   }, [toast]);
 
   const handleAddRecord = async (newRecord: Omit<DeliveryRecord, 'id'>) => {
@@ -99,10 +110,10 @@ export default function Dashboard() {
         };
     }
     const totals = calculateTotals(records);
-    const bill = calculateBill(totals);
-    const daysWithoutDelivery = calculateDaysWithoutDelivery(records);
+    const bill = calculateBill(totals, rates);
+    const daysWithoutDelivery = { milk: null, water: null, houseCleaning: null, gardener: null };
     return { totals, bill, daysWithoutDelivery };
-  }, [records, isMounted]);
+  }, [records, isMounted, rates]);
   
   if (isLoading && isMounted) {
     return (
@@ -114,8 +125,14 @@ export default function Dashboard() {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
+      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6 justify-between">
         <h1 className="text-2xl font-bold tracking-tight">HydroDairy Tracker</h1>
+        <Link href="/settings">
+          <Button variant="outline" size="icon">
+            <Settings className="h-4 w-4" />
+            <span className="sr-only">Settings</span>
+          </Button>
+        </Link>
       </header>
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">

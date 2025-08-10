@@ -9,10 +9,14 @@ import {
   query,
   orderBy,
   Timestamp,
+  getDoc,
+  setDoc,
 } from 'firebase/firestore';
-import type { DeliveryRecord } from './types';
+import type { DeliveryRecord, Rates } from './types';
+import { DEFAULT_RATES } from './constants';
 
 const DELIVERY_RECORDS_COLLECTION = 'deliveryRecords';
+const RATES_DOCUMENT = 'rates';
 
 // Firestore data structure might differ from client-side types
 type FirestoreDeliveryRecord = {
@@ -62,4 +66,22 @@ export const updateDeliveryRecord = async (record: DeliveryRecord) => {
 export const deleteDeliveryRecord = async (id: string) => {
   const docRef = doc(db, DELIVERY_RECORDS_COLLECTION, id);
   await deleteDoc(docRef);
+};
+
+export const getRates = async (): Promise<Rates | null> => {
+  const docRef = doc(db, RATES_DOCUMENT, 'currentRates');
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    return docSnap.data() as Rates;
+  } else {
+    // If no rates are set, create them with default values
+    await setDoc(docRef, DEFAULT_RATES);
+    return DEFAULT_RATES;
+  }
+};
+
+export const updateRates = async (newRates: Rates) => {
+  const docRef = doc(db, RATES_DOCUMENT, 'currentRates');
+  await setDoc(docRef, newRates);
 };

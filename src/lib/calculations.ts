@@ -1,5 +1,4 @@
-import type { DeliveryRecord } from './types';
-import { PRICE_PER_LITER } from './constants';
+import type { DeliveryRecord, Rates } from './types';
 import { differenceInDays, parseISO, startOfToday } from 'date-fns';
 
 export const calculateTotals = (records: DeliveryRecord[]) => {
@@ -21,12 +20,12 @@ export const calculateTotals = (records: DeliveryRecord[]) => {
   );
 };
 
-export const calculateBill = (totals: { milk: number; water: number; houseCleaning: number; gardener: number }) => {
+export const calculateBill = (totals: { milk: number; water: number; houseCleaning: number; gardener: number }, rates: Rates) => {
   return {
-    milkBill: totals.milk * PRICE_PER_LITER.milk,
-    waterBill: totals.water * PRICE_PER_LITER.water,
-    houseCleaningBill: totals.houseCleaning * PRICE_PER_LITER['house-cleaning'],
-    gardenerBill: totals.gardener * PRICE_PER_LITER.gardener,
+    milkBill: totals.milk * rates.milk,
+    waterBill: totals.water * rates.water,
+    houseCleaningBill: totals.houseCleaning * rates['house-cleaning'],
+    gardenerBill: totals.gardener * rates.gardener,
   };
 };
 
