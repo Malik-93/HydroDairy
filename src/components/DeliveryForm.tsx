@@ -14,6 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import type { DeliveryRecord } from "@/lib/types"
@@ -29,6 +30,9 @@ const formSchema = z.object({
   quantity: z.coerce.number().min(0.1, {
     message: "Quantity must be greater than 0.",
   }),
+  status: z.enum(["delivered", "returned"], {
+    required_error: "Please select a status."
+  }),
 });
 
 type DeliveryFormProps = {
@@ -42,6 +46,7 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
     defaultValues: {
       item: "milk",
       quantity: 1,
+      status: "delivered",
     },
   });
 
@@ -50,6 +55,7 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
       date: new Date(),
       item: "milk",
       quantity: 1,
+      status: "delivered",
     })
   }, [form])
 
@@ -63,12 +69,13 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
       await onAddRecord(newRecord);
       toast({
         title: "Success!",
-        description: `Added ${values.quantity}L of ${values.item}.`,
+        description: `Added record for ${values.quantity}L of ${values.item} (${values.status}).`,
       });
       form.reset({
         date: new Date(),
         item: "milk",
-        quantity: 1
+        quantity: 1,
+        status: "delivered"
       });
       // Manually trigger revalidation to clear the form state
       form.trigger();
@@ -84,11 +91,45 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Add Delivery</CardTitle>
+        <CardTitle>Add Record</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+             <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>Status</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex space-x-4"
+                    >
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="delivered" />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                          Delivered
+                        </FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="returned" />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                          Returned
+                        </FormLabel>
+                      </FormItem>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="date"

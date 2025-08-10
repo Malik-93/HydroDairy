@@ -19,6 +19,7 @@ type FirestoreDeliveryRecord = {
   date: Timestamp;
   item: 'milk' | 'water';
   quantity: number;
+  status: 'delivered' | 'returned';
 };
 
 // Converts a Firestore doc to a client-side DeliveryRecord
@@ -29,6 +30,7 @@ const fromFirestore = (doc: any): DeliveryRecord => {
     date: data.date.toDate().toISOString(),
     item: data.item,
     quantity: data.quantity,
+    status: data.status || 'delivered', // Default to 'delivered' for old records
   };
 };
 
@@ -43,6 +45,7 @@ export const addDeliveryRecord = async (record: Omit<DeliveryRecord, 'id'>) => {
     date: Timestamp.fromDate(new Date(record.date)),
     item: record.item,
     quantity: record.quantity,
+    status: record.status,
   });
   return docRef.id;
 };

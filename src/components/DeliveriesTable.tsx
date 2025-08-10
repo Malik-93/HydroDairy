@@ -41,6 +41,7 @@ export function DeliveriesTable({ records, onRemoveRecord, onEditRecord }: Deliv
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Item</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Quantity</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -54,6 +55,11 @@ export function DeliveriesTable({ records, onRemoveRecord, onEditRecord }: Deliv
                       <Badge variant={record.item === 'milk' ? 'secondary' : 'default'} className="capitalize flex items-center gap-1 w-fit">
                         {record.item === 'milk' ? <MilkIcon className="h-3 w-3" /> : <Droplets className="h-3 w-3" />}
                         {record.item}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={record.status === 'delivered' ? 'outline' : 'destructive'} className="capitalize">
+                        {record.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">{record.quantity.toFixed(2)} L</TableCell>
