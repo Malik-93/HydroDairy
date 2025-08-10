@@ -2,7 +2,7 @@
 
 import type { DeliveryRecord } from '@/lib/types';
 import { format } from 'date-fns';
-import { Trash2, Droplets, Pencil } from 'lucide-react';
+import { Trash2, Droplets, Pencil, Home, Flower } from 'lucide-react';
 import { MilkIcon } from './icons';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -27,12 +27,27 @@ type DeliveriesTableProps = {
   onEditRecord: (record: DeliveryRecord) => void;
 };
 
+const getItemIcon = (item: DeliveryRecord['item']) => {
+  switch (item) {
+    case 'milk':
+      return <MilkIcon className="h-3 w-3" />;
+    case 'water':
+      return <Droplets className="h-3 w-3" />;
+    case 'house-cleaning':
+      return <Home className="h-3 w-3" />;
+    case 'gardener':
+      return <Flower className="h-3 w-3" />;
+    default:
+      return null;
+  }
+}
+
 export function DeliveriesTable({ records, onRemoveRecord, onEditRecord }: DeliveriesTableProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Delivery History</CardTitle>
-        <CardDescription>A log of all your past deliveries.</CardDescription>
+        <CardDescription>A log of all your past deliveries and services.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="border rounded-md">
@@ -40,9 +55,9 @@ export function DeliveriesTable({ records, onRemoveRecord, onEditRecord }: Deliv
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
-                <TableHead>Item</TableHead>
+                <TableHead>Item / Service</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Quantity</TableHead>
+                <TableHead className="text-right">Quantity / Visits</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -52,9 +67,9 @@ export function DeliveriesTable({ records, onRemoveRecord, onEditRecord }: Deliv
                   <TableRow key={record.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell className="font-medium">{format(new Date(record.date), 'PPP')}</TableCell>
                     <TableCell>
-                      <Badge variant={record.item === 'milk' ? 'secondary' : 'default'} className="capitalize flex items-center gap-1 w-fit">
-                        {record.item === 'milk' ? <MilkIcon className="h-3 w-3" /> : <Droplets className="h-3 w-3" />}
-                        {record.item}
+                      <Badge variant={record.item === 'milk' ? 'secondary' : record.item === 'water' ? 'default' : record.item === 'house-cleaning' ? 'outline' : 'destructive'} className="capitalize flex items-center gap-1 w-fit">
+                        {getItemIcon(record.item)}
+                        {record.item.replace('-', ' ')}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -62,7 +77,7 @@ export function DeliveriesTable({ records, onRemoveRecord, onEditRecord }: Deliv
                         {record.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">{record.quantity.toFixed(2)} L</TableCell>
+                    <TableCell className="text-right">{record.quantity.toFixed(record.item === 'milk' || record.item === 'water' ? 2 : 0)}</TableCell>
                     <TableCell className="text-right">
                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => onEditRecord(record)}>
                           <Pencil className="h-4 w-4" />

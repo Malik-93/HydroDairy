@@ -22,6 +22,8 @@ type ReminderCardProps = {
   daysWithoutDelivery: {
     milk: number | null;
     water: number | null;
+    houseCleaning: number | null;
+    gardener: number | null;
   };
 };
 
@@ -33,8 +35,8 @@ export function ReminderCard({ daysWithoutDelivery }: ReminderCardProps) {
   const form = useForm<z.infer<typeof reminderSchema>>({
     resolver: zodResolver(reminderSchema),
     defaultValues: {
-      deliverySchedule: "Daily delivery for milk, twice a week for water (Monday, Friday).",
-      consumptionPatterns: "We consume about 1KG of milk daily and bottels as per needed twice a week.",
+      deliverySchedule: "Daily delivery for milk, twice a week for water (Monday, Friday). House cleaning daily except Sunday. Gardener visits every Wednesday.",
+      consumptionPatterns: "We consume about 1KG of milk daily and bottles as per needed twice a week.",
     },
   });
 

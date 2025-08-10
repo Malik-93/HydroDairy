@@ -17,7 +17,7 @@ const DELIVERY_RECORDS_COLLECTION = 'deliveryRecords';
 // Firestore data structure might differ from client-side types
 type FirestoreDeliveryRecord = {
   date: Timestamp;
-  item: 'milk' | 'water';
+  item: 'milk' | 'water' | 'house-cleaning' | 'gardener';
   quantity: number;
   status: 'delivered' | 'returned';
 };

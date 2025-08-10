@@ -14,7 +14,7 @@ const GenerateReorderRemindersInputSchema = z.object({
   deliverySchedule: z
     .string()
     .describe(
-      'A string describing the delivery schedule, including days of the week and frequency.'
+      'A string describing the delivery schedule, including days of the week and frequency for milk, water, house cleaning, and gardener.'
     ),
   consumptionPatterns: z
     .string()
@@ -50,7 +50,7 @@ const prompt = ai.definePrompt({
   name: 'generateReorderRemindersPrompt',
   input: {schema: GenerateReorderRemindersInputSchema},
   output: {schema: GenerateReorderRemindersOutputSchema},
-  prompt: `You are a helpful assistant that generates reorder reminders for milk and water based on delivery schedule and consumption patterns.
+  prompt: `You are a helpful assistant that generates reorder reminders for milk and water based on delivery schedule and consumption patterns. You also consider schedules for house cleaning and gardener.
 
   Delivery Schedule: {{{deliverySchedule}}}
   Consumption Patterns: {{{consumptionPatterns}}}

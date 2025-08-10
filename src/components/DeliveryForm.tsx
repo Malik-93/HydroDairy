@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { format } from "date-fns"
-import { CalendarIcon, Droplets } from "lucide-react"
+import { CalendarIcon, Droplets, Home, Flower } from "lucide-react"
 import { useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -24,7 +24,7 @@ const formSchema = z.object({
   date: z.date({
     required_error: "A date is required.",
   }),
-  item: z.enum(["milk", "water"], {
+  item: z.enum(["milk", "water", "house-cleaning", "gardener"], {
     required_error: "Please select an item.",
   }),
   quantity: z.coerce.number().min(0.1, {
@@ -69,7 +69,7 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
       await onAddRecord(newRecord);
       toast({
         title: "Success!",
-        description: `Added record for ${values.quantity}L of ${values.item} (${values.status}).`,
+        description: `Added record for ${values.quantity} of ${values.item} (${values.status}).`,
       });
       form.reset({
         date: new Date(),
@@ -113,7 +113,7 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
                           <RadioGroupItem value="delivered" />
                         </FormControl>
                         <FormLabel className="font-normal">
-                          Delivered
+                          Delivered / Done
                         </FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-2 space-y-0">
@@ -121,7 +121,7 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
                           <RadioGroupItem value="returned" />
                         </FormControl>
                         <FormLabel className="font-normal">
-                          Returned
+                          Returned / Canceled
                         </FormLabel>
                       </FormItem>
                     </RadioGroup>
@@ -171,7 +171,7 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
               name="item"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Item</FormLabel>
+                  <FormLabel>Item / Service</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -189,6 +189,16 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
                           <Droplets className="h-4 w-4" /> Water
                         </div>
                       </SelectItem>
+                      <SelectItem value="house-cleaning">
+                        <div className="flex items-center gap-2">
+                          <Home className="h-4 w-4" /> House Cleaning
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="gardener">
+                        <div className="flex items-center gap-2">
+                          <Flower className="h-4 w-4" /> Gardener
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -201,9 +211,9 @@ export function DeliveryForm({ onAddRecord }: DeliveryFormProps) {
               name="quantity"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Quantity (KG/Bottels)</FormLabel>
+                  <FormLabel>Quantity / Visits</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.1" placeholder="e.g., 1.5" {...field} />
+                    <Input type="number" step="1" placeholder="e.g., 1" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

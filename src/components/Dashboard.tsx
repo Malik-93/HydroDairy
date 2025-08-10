@@ -14,7 +14,7 @@ import { DeliveriesTable } from './DeliveriesTable';
 import { SummaryCard } from './SummaryCard';
 import { ReminderCard } from './ReminderCard';
 import { MilkIcon } from './icons';
-import { Droplets } from 'lucide-react';
+import { Droplets, Home, Flower } from 'lucide-react';
 import { EditDeliveryDialog } from './EditDeliveryDialog';
 import { useToast } from '@/hooks/use-toast';
 
@@ -93,9 +93,9 @@ export default function Dashboard() {
   const summary = useMemo(() => {
     if (!isMounted) {
         return {
-            totals: { milk: 0, water: 0 },
-            bill: { milkBill: 0, waterBill: 0 },
-            daysWithoutDelivery: { milk: null, water: null }
+            totals: { milk: 0, water: 0, houseCleaning: 0, gardener: 0 },
+            bill: { milkBill: 0, waterBill: 0, houseCleaningBill: 0, gardenerBill: 0 },
+            daysWithoutDelivery: { milk: null, water: null, houseCleaning: null, gardener: null }
         };
     }
     const totals = calculateTotals(records);
@@ -118,7 +118,7 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold tracking-tight">HydroDairy Tracker</h1>
       </header>
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-8">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">
           <SummaryCard
             title="Total Milk Delivered"
             value={`${summary.totals.milk.toFixed(2)} (KG)`}
@@ -128,24 +128,24 @@ export default function Dashboard() {
           />
           <SummaryCard
             title="Total Water Delivered"
-            value={`${summary.totals.water.toFixed(2)} (Bottels)`}
+            value={`${summary.totals.water.toFixed(2)} (Bottles)`}
             icon={<Droplets className="h-6 w-6 text-muted-foreground" />}
             footerText={`${summary.bill.waterBill.toFixed(2)} PKR`}
             className="bg-primary/20"
           />
           <SummaryCard
-            title="Days Since Last Milk"
-            value={summary.daysWithoutDelivery.milk !== null ? `${summary.daysWithoutDelivery.milk}` : 'N/A'}
-            icon={<MilkIcon className="h-6 w-6 text-muted-foreground" />}
-            footerText={summary.daysWithoutDelivery.milk === null ? "No deliveries yet" : "days ago"}
-            className="bg-accent/20"
+            title="House Cleaning Visits"
+            value={`${summary.totals.houseCleaning} visits`}
+            icon={<Home className="h-6 w-6 text-muted-foreground" />}
+            footerText={`${summary.bill.houseCleaningBill.toFixed(2)} PKR`}
+            className="bg-green-500/20"
           />
           <SummaryCard
-            title="Days Since Last Water"
-            value={summary.daysWithoutDelivery.water !== null ? `${summary.daysWithoutDelivery.water}` : 'N/A'}
-            icon={<Droplets className="h-6 w-6 text-muted-foreground" />}
-            footerText={summary.daysWithoutDelivery.water === null ? "No deliveries yet" : "days ago"}
-            className="bg-primary/20"
+            title="Gardener Visits"
+            value={`${summary.totals.gardener} visits`}
+            icon={<Flower className="h-6 w-6 text-muted-foreground" />}
+            footerText={`${summary.bill.gardenerBill.toFixed(2)} PKR`}
+            className="bg-purple-500/20"
           />
         </div>
 
