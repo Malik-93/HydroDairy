@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -45,11 +44,17 @@ export default function Dashboard() {
   const [paymentState, setPaymentState] = useState<PaymentState>({ item: null, amount: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [rates, setRates] = useState<Rates>(DEFAULT_RATES);
-  const [itemFilter, setItemFilter] = useState<string>('all');
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
+  const [deliveryItemFilter, setDeliveryItemFilter] = useState<string>('all');
+  const [paymentItemFilter, setPaymentItemFilter] = useState<string>('all');
+  const [deliveryDateRange, setDeliveryDateRange] = useState<{ from: Date; to: Date }>({
     from: startOfMonth(new Date()),
     to: new Date(),
   });
+  const [paymentDateRange, setPaymentDateRange] = useState<{ from: Date | null; to: Date | null }>({
+    from: null,
+    to: null,
+  });
+
   const { toast } = useToast();
 
   useEffect(() => {
@@ -174,8 +179,8 @@ export default function Dashboard() {
   const filteredDeliveryRecords = useMemo(() => {
     let result = deliveryRecords;
 
-    const fromDate = dateRange.from ? new Date(dateRange.from.setHours(0, 0, 0, 0)) : null;
-    const toDate = dateRange.to ? new Date(dateRange.to.setHours(23, 59, 59, 999)) : null;
+    const fromDate = deliveryDateRange.from ? new Date(deliveryDateRange.from.setHours(0, 0, 0, 0)) : null;
+    const toDate = deliveryDateRange.to ? new Date(deliveryDateRange.to.setHours(23, 59, 59, 999)) : null;
 
     result = result.filter((record) => {
         const recordDate = new Date(record.date);
@@ -184,30 +189,32 @@ export default function Dashboard() {
         return true;
     });
 
-    if (itemFilter !== 'all') {
-      return result.filter((record) => record.item === itemFilter);
+    if (deliveryItemFilter !== 'all') {
+      return result.filter((record) => record.item === deliveryItemFilter);
     }
     return result;
-  }, [deliveryRecords, dateRange, itemFilter]);
+  }, [deliveryRecords, deliveryDateRange, deliveryItemFilter]);
 
   const filteredPaymentRecords = useMemo(() => {
     let result = paymentRecords;
 
-    const fromDate = dateRange.from ? new Date(dateRange.from.setHours(0, 0, 0, 0)) : null;
-    const toDate = dateRange.to ? new Date(dateRange.to.setHours(23, 59, 59, 999)) : null;
+    const fromDate = paymentDateRange.from ? new Date(paymentDateRange.from.setHours(0, 0, 0, 0)) : null;
+    const toDate = paymentDateRange.to ? new Date(paymentDateRange.to.setHours(23, 59, 59, 999)) : null;
 
-    result = result.filter((record) => {
-        const recordDate = new Date(record.date);
-        if (fromDate && recordDate < fromDate) return false;
-        if (toDate && recordDate > toDate) return false;
-        return true;
-    });
+    if (fromDate || toDate) {
+        result = result.filter((record) => {
+            const recordDate = new Date(record.date);
+            if (fromDate && recordDate < fromDate) return false;
+            if (toDate && recordDate > toDate) return false;
+            return true;
+        });
+    }
 
-    if (itemFilter !== 'all') {
-      return result.filter((record) => record.item === itemFilter);
+    if (paymentItemFilter !== 'all') {
+      return result.filter((record) => record.item === paymentItemFilter);
     }
     return result;
-  }, [paymentRecords, dateRange, itemFilter]);
+  }, [paymentRecords, paymentDateRange, paymentItemFilter]);
 
 
   const summary = useMemo(() => {
@@ -252,8 +259,8 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold tracking-tight">Household Tracker</h1>
         <div className="flex items-center gap-2">
           <DateRangePicker 
-              date={dateRange}
-              onDateChange={setDateRange}
+              date={deliveryDateRange}
+              onDateChange={setDeliveryDateRange}
           />
           <Link href="/settings">
             <Button variant="outline" size="icon">
@@ -319,16 +326,18 @@ export default function Dashboard() {
                     records={filteredDeliveryRecords} 
                     onRemoveRecord={handleRemoveDeliveryRecord} 
                     onEditRecord={setEditingRecord}
-                    filter={itemFilter}
-                    onFilterChange={setItemFilter}
+                    filter={deliveryItemFilter}
+                    onFilterChange={setDeliveryItemFilter}
                   />
                 </TabsContent>
                 <TabsContent value="payments">
                     <PaymentsHistoryTable
                       records={filteredPaymentRecords}
                       onRemoveRecord={handleRemovePaymentRecord}
-                      filter={itemFilter}
-                      onFilterChange={setItemFilter}
+                      filter={paymentItemFilter}
+                      onFilterChange={setPaymentItemFilter}
+                      dateRange={paymentDateRange}
+                      onDateRangeChange={setPaymentDateRange}
                     />
                 </TabsContent>
               </Tabs>
@@ -353,3 +362,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+    

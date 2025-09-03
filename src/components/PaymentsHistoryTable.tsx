@@ -22,12 +22,15 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DateRangePicker } from './ui/date-range-picker';
 
 type PaymentsHistoryTableProps = {
   records: PaymentRecord[];
   onRemoveRecord: (id: string) => void;
   filter: string;
   onFilterChange: (value: string) => void;
+  dateRange: { from: Date | null, to: Date | null };
+  onDateRangeChange: (date: { from: Date | null, to: Date | null }) => void;
 };
 
 const getItemIcon = (item: PaymentRecord['item']) => {
@@ -45,7 +48,7 @@ const getItemIcon = (item: PaymentRecord['item']) => {
   }
 }
 
-export function PaymentsHistoryTable({ records, onRemoveRecord, filter, onFilterChange }: PaymentsHistoryTableProps) {
+export function PaymentsHistoryTable({ records, onRemoveRecord, filter, onFilterChange, dateRange, onDateRangeChange }: PaymentsHistoryTableProps) {
   
   return (
     <Card>
@@ -55,6 +58,12 @@ export function PaymentsHistoryTable({ records, onRemoveRecord, filter, onFilter
             <CardDescription>A log of all your past payments.</CardDescription>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+             <DateRangePicker 
+              date={dateRange}
+              onDateChange={onDateRangeChange}
+              className="w-full sm:w-[300px]"
+              placeholder="Filter by date..."
+            />
             <Select value={filter} onValueChange={onFilterChange}>
                 <SelectTrigger className="w-full sm:w-48">
                     <SelectValue placeholder="Filter by item..." />
@@ -131,3 +140,5 @@ export function PaymentsHistoryTable({ records, onRemoveRecord, filter, onFilter
     </Card>
   );
 }
+
+    

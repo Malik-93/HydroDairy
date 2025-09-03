@@ -16,22 +16,22 @@ import {
 } from "@/components/ui/popover"
 
 type DateRangePickerProps = React.HTMLAttributes<HTMLDivElement> & {
-    date: { from: Date, to: Date };
-    onDateChange: (date: { from: Date, to: Date }) => void;
+    date: { from: Date | null, to: Date | null };
+    onDateChange: (date: { from: Date | null, to: Date | null }) => void;
+    placeholder?: string;
 }
 
 export function DateRangePicker({
   className,
   date,
-  onDateChange
+  onDateChange,
+  placeholder = "Pick a date range"
 }: DateRangePickerProps) {
 
   const handleDateSelect = (range: DateRange | undefined) => {
-    if (range?.from && range?.to) {
-        onDateChange({ from: range.from, to: range.to });
-    } else if (range?.from) {
-        onDateChange({ from: range.from, to: range.from });
-    }
+      if (range) {
+        onDateChange({ from: range.from || null, to: range.to || null });
+      }
   }
 
   return (
@@ -43,7 +43,7 @@ export function DateRangePicker({
             variant={"outline"}
             className={cn(
               "w-[300px] justify-start text-left font-normal",
-              !date && "text-muted-foreground"
+              !date?.from && "text-muted-foreground"
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
@@ -57,7 +57,7 @@ export function DateRangePicker({
                 format(date.from, "LLL dd, y")
               )
             ) : (
-              <span>Pick a date</span>
+              <span>{placeholder}</span>
             )}
           </Button>
         </PopoverTrigger>
@@ -65,8 +65,8 @@ export function DateRangePicker({
           <Calendar
             initialFocus
             mode="range"
-            defaultMonth={date?.from}
-            selected={date}
+            defaultMonth={date?.from || undefined}
+            selected={date.from && date.to ? {from: date.from, to: date.to} : undefined}
             onSelect={handleDateSelect}
             numberOfMonths={2}
           />
@@ -75,3 +75,5 @@ export function DateRangePicker({
     </div>
   )
 }
+
+    
