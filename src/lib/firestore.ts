@@ -11,6 +11,8 @@ import {
   Timestamp,
   getDoc,
   setDoc,
+  where,
+  writeBatch,
 } from 'firebase/firestore';
 import type { DeliveryRecord, Rates } from './types';
 import { DEFAULT_RATES } from './constants';
@@ -67,6 +69,22 @@ export const deleteDeliveryRecord = async (id: string) => {
   const docRef = doc(db, DELIVERY_RECORDS_COLLECTION, id);
   await deleteDoc(docRef);
 };
+
+export const deleteRecordsByItem = async (item: string) => {
+    const q = query(collection(db, DELIVERY_RECORDS_COLLECTION), where('item', '==', item));
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+        return;
+    }
+
+    const batch = writeBatch(db);
+    querySnapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+}
 
 export const getRates = async (): Promise<Rates | null> => {
   const docRef = doc(db, RATES_DOCUMENT, 'currentRates');

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -9,18 +10,29 @@ import {
   updateDeliveryRecord,
   deleteDeliveryRecord,
   getRates,
+  deleteRecordsByItem,
 } from '@/lib/firestore';
 import { DeliveryForm } from './DeliveryForm';
 import { DeliveriesTable } from './DeliveriesTable';
 import { SummaryCard } from './SummaryCard';
 import { ReminderCard } from './ReminderCard';
 import { MilkIcon } from './icons';
-import { Droplets, Home, Flower, Settings } from 'lucide-react';
+import { Droplets, Home, Flower, Settings, Trash2 } from 'lucide-react';
 import { EditDeliveryDialog } from './EditDeliveryDialog';
 import { useToast } from '@/hooks/use-toast';
 import { DEFAULT_RATES } from '@/lib/constants';
 import Link from 'next/link';
 import { Button } from './ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Dashboard() {
   const [isMounted, setIsMounted] = useState(false);
@@ -29,6 +41,7 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [rates, setRates] = useState<Rates>(DEFAULT_RATES);
   const [itemFilter, setItemFilter] = useState<string>('all');
+  const [itemToClear, setItemToClear] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -58,12 +71,21 @@ export default function Dashboard() {
   }, [toast]);
 
   const handleAddRecord = async (newRecord: Omit<DeliveryRecord, 'id'>) => {
-    const newId = await addDeliveryRecord(newRecord);
-    const recordWithId = { ...newRecord, id: newId };
-    const sortedRecords = [...records, recordWithId].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-    setRecords(sortedRecords);
+    try {
+      const newId = await addDeliveryRecord(newRecord);
+      const recordWithId = { ...newRecord, id: newId };
+      const sortedRecords = [...records, recordWithId].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      setRecords(sortedRecords);
+    } catch (error) {
+      console.error("Error adding record: ", error);
+      toast({
+         variant: "destructive",
+         title: "Error",
+         description: "Failed to add the delivery record.",
+      });
+    }
   };
 
   const handleUpdateRecord = async (updatedRecord: DeliveryRecord) => {
@@ -101,6 +123,27 @@ export default function Dashboard() {
       });
     }
   };
+
+  const handleClearDues = async () => {
+    if (!itemToClear) return;
+    try {
+      await deleteRecordsByItem(itemToClear);
+      setRecords(records.filter((record) => record.item !== itemToClear));
+      toast({
+        title: "Dues Cleared!",
+        description: `All records for ${itemToClear.replace('-', ' ')} have been deleted.`,
+      });
+    } catch (error) {
+      console.error("Error clearing dues: ", error);
+      toast({
+        variant: "destructive",
+        title: "Error clearing dues",
+        description: `Could not clear dues for ${itemToClear}. Please try again.`,
+      });
+    } finally {
+        setItemToClear(null);
+    }
+  }
   
   const filteredRecords = useMemo(() => {
     if (itemFilter === 'all') {
@@ -149,6 +192,7 @@ export default function Dashboard() {
             value={`${summary.totals.milk.toFixed(2)} (KG)`}
             icon={<MilkIcon className="h-6 w-6 text-muted-foreground" />}
             footerText={`${summary.bill.milkBill.toFixed(2)} PKR`}
+            onClearDues={() => setItemToClear('milk')}
             className="bg-accent/20"
           />
           <SummaryCard
@@ -156,6 +200,7 @@ export default function Dashboard() {
             value={`${summary.totals.water.toFixed(2)} (Bottles)`}
             icon={<Droplets className="h-6 w-6 text-muted-foreground" />}
             footerText={`${summary.bill.waterBill.toFixed(2)} PKR`}
+            onClearDues={() => setItemToClear('water')}
             className="bg-primary/20"
           />
           <SummaryCard
@@ -163,6 +208,7 @@ export default function Dashboard() {
             value={`${summary.totals.houseCleaning} visits`}
             icon={<Home className="h-6 w-6 text-muted-foreground" />}
             footerText={`${summary.bill.houseCleaningBill.toFixed(2)} PKR`}
+            onClearDues={() => setItemToClear('house-cleaning')}
             className="bg-green-500/20"
           />
           <SummaryCard
@@ -170,6 +216,7 @@ export default function Dashboard() {
             value={`${summary.totals.gardener} visits`}
             icon={<Flower className="h-6 w-6 text-muted-foreground" />}
             footerText={`${summary.bill.gardenerBill.toFixed(2)} PKR`}
+            onClearDues={() => setItemToClear('gardener')}
             className="bg-purple-500/20"
           />
         </div>
@@ -197,6 +244,23 @@ export default function Dashboard() {
           onOpenChange={(isOpen) => !isOpen && setEditingRecord(null)}
         />
       )}
+       <AlertDialog open={!!itemToClear} onOpenChange={(isOpen) => !isOpen && setItemToClear(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to clear these dues?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete all records for{' '}
+              <span className="font-semibold capitalize">{itemToClear?.replace('-', ' ')}</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearDues} className="bg-destructive hover:bg-destructive/90">
+              Clear Dues
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
