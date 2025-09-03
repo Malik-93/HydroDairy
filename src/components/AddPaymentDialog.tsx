@@ -31,9 +31,10 @@ type AddPaymentDialogProps = {
   item: Item,
   onAddPayment: (item: Item, amount: number, date: Date) => Promise<void>;
   onOpenChange: (isOpen: boolean) => void;
+  prefilledAmount?: number;
 }
 
-export function AddPaymentDialog({ item, onAddPayment, onOpenChange }: AddPaymentDialogProps) {
+export function AddPaymentDialog({ item, onAddPayment, onOpenChange, prefilledAmount = 0 }: AddPaymentDialogProps) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,9 +43,9 @@ export function AddPaymentDialog({ item, onAddPayment, onOpenChange }: AddPaymen
   useEffect(() => {
     form.reset({
       date: new Date(),
-      amount: 0,
+      amount: prefilledAmount > 0 ? prefilledAmount : 0,
     });
-  }, [item, form]);
+  }, [item, form, prefilledAmount]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     await onAddPayment(item, values.amount, values.date);

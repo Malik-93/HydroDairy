@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import type { DeliveryRecord, Rates, Item } from '@/lib/types';
-import { calculateTotals, calculateBill } from '@/lib/calculations';
+import { calculateTotals, calculateBill, calculateDaysWithoutDelivery } from '@/lib/calculations';
 import {
   getDeliveryRecords,
   addDeliveryRecord,
@@ -27,11 +27,15 @@ import { Button } from './ui/button';
 import { startOfMonth } from 'date-fns';
 import { DateRangePicker } from './ui/date-range-picker';
 
+type PaymentState = {
+    item: Item | null,
+    amount: number
+}
 export default function Dashboard() {
   const [isMounted, setIsMounted] = useState(false);
   const [records, setRecords] = useState<DeliveryRecord[]>([]);
   const [editingRecord, setEditingRecord] = useState<DeliveryRecord | null>(null);
-  const [itemToPay, setItemToPay] = useState<Item | null>(null);
+  const [paymentState, setPaymentState] = useState<PaymentState>({ item: null, amount: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [rates, setRates] = useState<Rates>(DEFAULT_RATES);
   const [itemFilter, setItemFilter] = useState<string>('all');
@@ -123,7 +127,7 @@ export default function Dashboard() {
 
   const handleAddPayment = async (item: Item, amount: number, date: Date) => {
       const rate = rates[item];
-      if (rate === 0) {
+      if (rate === 0 && amount > 0) {
            toast({
              variant: "destructive",
              title: "Error",
@@ -132,7 +136,7 @@ export default function Dashboard() {
            return;
       }
 
-      const quantity = amount / rate;
+      const quantity = rate > 0 ? amount / rate : 0;
       
       const paymentRecord: Omit<DeliveryRecord, 'id'> = {
           date: date.toISOString(),
@@ -154,7 +158,7 @@ export default function Dashboard() {
             description: "Failed to add payment record.",
         });
       }
-      setItemToPay(null);
+      setPaymentState({ item: null, amount: 0 });
   }
   
   const filteredRecords = useMemo(() => {
@@ -185,17 +189,19 @@ export default function Dashboard() {
         return {
             totals: { milk: 0, water: 0, 'house-cleaning': 0, gardener: 0 },
             bill: { milkBill: 0, waterBill: 0, houseCleaningBill: 0, gardenerBill: 0 },
+            allRecordsBill: { milkBill: 0, waterBill: 0, houseCleaningBill: 0, gardenerBill: 0 },
             daysWithoutDelivery: { milk: null, water: null, houseCleaning: null, gardener: null }
         };
     }
-    // Calculate summary based on filtered records
     const totals = calculateTotals(filteredRecords);
     const bill = calculateBill(totals, rates);
 
-    // This should probably be calculated based on all records, not filtered ones.
-    const daysWithoutDelivery = { milk: null, water: null, houseCleaning: null, gardener: null };
-    return { totals, bill, daysWithoutDelivery };
-  }, [filteredRecords, isMounted, rates]);
+    const allRecordsTotals = calculateTotals(records);
+    const allRecordsBill = calculateBill(allRecordsTotals, rates);
+    
+    const daysWithoutDelivery = calculateDaysWithoutDelivery(records);
+    return { totals, bill, allRecordsBill, daysWithoutDelivery };
+  }, [filteredRecords, isMounted, rates, records]);
   
   if (isLoading && isMounted) {
     return (
@@ -225,35 +231,39 @@ export default function Dashboard() {
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">
           <SummaryCard
-            title="Total Milk Delivered"
-            value={`${summary.totals.milk.toFixed(2)} (KG)`}
+            title="Milk"
+            value={`${summary.totals.milk.toFixed(2)} KG`}
             icon={<MilkIcon className="h-6 w-6 text-muted-foreground" />}
-            footerText={`${summary.bill.milkBill.toFixed(2)} PKR`}
-            onAddPayment={() => setItemToPay('milk')}
+            bill={summary.bill.milkBill}
+            totalBill={summary.allRecordsBill.milkBill}
+            onSettleBill={() => setPaymentState({ item: 'milk', amount: summary.bill.milkBill })}
             className="bg-accent/20"
           />
           <SummaryCard
-            title="Total Water Delivered"
-            value={`${summary.totals.water.toFixed(2)} (Bottles)`}
+            title="Water"
+            value={`${summary.totals.water.toFixed(2)} Bottles`}
             icon={<Droplets className="h-6 w-6 text-muted-foreground" />}
-            footerText={`${summary.bill.waterBill.toFixed(2)} PKR`}
-            onAddPayment={() => setItemToPay('water')}
+            bill={summary.bill.waterBill}
+            totalBill={summary.allRecordsBill.waterBill}
+            onSettleBill={() => setPaymentState({ item: 'water', amount: summary.bill.waterBill })}
             className="bg-primary/20"
           />
           <SummaryCard
-            title="House Cleaning Visits"
+            title="House Cleaning"
             value={`${summary.totals['house-cleaning']} visits`}
             icon={<Home className="h-6 w-6 text-muted-foreground" />}
-            footerText={`${summary.bill.houseCleaningBill.toFixed(2)} PKR`}
-            onAddPayment={() => setItemToPay('house-cleaning')}
+            bill={summary.bill.houseCleaningBill}
+            totalBill={summary.allRecordsBill.houseCleaningBill}
+            onSettleBill={() => setPaymentState({ item: 'house-cleaning', amount: summary.bill.houseCleaningBill })}
             className="bg-green-500/20"
           />
           <SummaryCard
-            title="Gardener Visits"
+            title="Gardener"
             value={`${summary.totals.gardener} visits`}
             icon={<Flower className="h-6 w-6 text-muted-foreground" />}
-            footerText={`${summary.bill.gardenerBill.toFixed(2)} PKR`}
-            onAddPayment={() => setItemToPay('gardener')}
+            bill={summary.bill.gardenerBill}
+            totalBill={summary.allRecordsBill.gardenerBill}
+            onSettleBill={() => setPaymentState({ item: 'gardener', amount: summary.bill.gardenerBill })}
             className="bg-purple-500/20"
           />
         </div>
@@ -281,11 +291,12 @@ export default function Dashboard() {
           onOpenChange={(isOpen) => !isOpen && setEditingRecord(null)}
         />
       )}
-       {itemToPay && (
+       {paymentState.item && (
         <AddPaymentDialog
-            item={itemToPay}
+            item={paymentState.item}
+            prefilledAmount={paymentState.amount}
             onAddPayment={handleAddPayment}
-            onOpenChange={(isOpen) => !isOpen && setItemToPay(null)}
+            onOpenChange={(isOpen) => !isOpen && setPaymentState({ item: null, amount: 0 })}
         />
        )}
     </div>
