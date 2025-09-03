@@ -13,6 +13,7 @@ import {
   addPaymentRecord,
   getPaymentRecords,
   deletePaymentRecord,
+  updatePaymentRecord,
 } from '@/lib/firestore';
 import { DeliveryForm } from './DeliveryForm';
 import { DeliveriesTable } from './DeliveriesTable';
@@ -30,6 +31,7 @@ import { startOfMonth } from 'date-fns';
 import { DateRangePicker } from './ui/date-range-picker';
 import { PaymentsHistoryTable } from './PaymentsHistoryTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { EditPaymentDialog } from './EditPaymentDialog';
 
 
 type PaymentState = {
@@ -41,6 +43,7 @@ export default function Dashboard() {
   const [deliveryRecords, setDeliveryRecords] = useState<DeliveryRecord[]>([]);
   const [paymentRecords, setPaymentRecords] = useState<PaymentRecord[]>([]);
   const [editingRecord, setEditingRecord] = useState<DeliveryRecord | null>(null);
+  const [editingPaymentRecord, setEditingPaymentRecord] = useState<PaymentRecord | null>(null);
   const [paymentState, setPaymentState] = useState<PaymentState>({ item: null, amount: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [rates, setRates] = useState<Rates>(DEFAULT_RATES);
@@ -123,6 +126,32 @@ export default function Dashboard() {
       });
     }
   };
+
+  const handleUpdatePaymentRecord = async (updatedRecord: PaymentRecord) => {
+    try {
+        await updatePaymentRecord(updatedRecord);
+        const updatedRecords = paymentRecords.map((r) =>
+            r.id === updatedRecord.id ? updatedRecord : r
+        );
+        const sortedRecords = updatedRecords.sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        setPaymentRecords(sortedRecords);
+        setEditingPaymentRecord(null);
+        toast({
+            title: "Payment Updated",
+            description: "The payment record has been updated successfully."
+        });
+    } catch (error) {
+        console.error("Error updating payment record: ", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to update the payment record.",
+        });
+    }
+  }
+
 
   const handleRemoveDeliveryRecord = async (id: string) => {
     try {
@@ -334,6 +363,7 @@ export default function Dashboard() {
                     <PaymentsHistoryTable
                       records={filteredPaymentRecords}
                       onRemoveRecord={handleRemovePaymentRecord}
+                      onEditRecord={setEditingPaymentRecord}
                       filter={paymentItemFilter}
                       onFilterChange={setPaymentItemFilter}
                       dateRange={paymentDateRange}
@@ -359,8 +389,17 @@ export default function Dashboard() {
             onOpenChange={(isOpen) => !isOpen && setPaymentState({ item: null, amount: 0 })}
         />
        )}
+       {editingPaymentRecord && (
+        <EditPaymentDialog
+          record={editingPaymentRecord}
+          onUpdateRecord={handleUpdatePaymentRecord}
+          onOpenChange={(isOpen) => !isOpen && setEditingPaymentRecord(null)}
+        />
+       )}
     </div>
   );
 }
+
+    
 
     

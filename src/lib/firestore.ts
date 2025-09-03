@@ -1,3 +1,4 @@
+
 import { db } from './firebase';
 import {
   collection,
@@ -105,6 +106,15 @@ export const addPaymentRecord = async (record: Omit<PaymentRecord, 'id'>) => {
     return docRef.id;
 }
 
+export const updatePaymentRecord = async (record: PaymentRecord) => {
+    const docRef = doc(db, PAYMENTS_COLLECTION, record.id);
+    const { id, ...dataToUpdate } = record;
+    await updateDoc(docRef, {
+        ...dataToUpdate,
+        date: Timestamp.fromDate(new Date(dataToUpdate.date)),
+    });
+};
+
 export const deletePaymentRecord = async (id: string) => {
     const docRef = doc(db, PAYMENTS_COLLECTION, id);
     await deleteDoc(docRef);
@@ -146,3 +156,5 @@ export const updateRates = async (newRates: Rates) => {
   const docRef = doc(db, RATES_DOCUMENT, 'currentRates');
   await setDoc(docRef, newRates);
 };
+
+    

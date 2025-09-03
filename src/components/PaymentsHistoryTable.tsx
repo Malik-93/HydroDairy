@@ -3,7 +3,7 @@
 
 import type { PaymentRecord } from '@/lib/types';
 import { format } from 'date-fns';
-import { Trash2, Droplets, Home, Flower } from 'lucide-react';
+import { Trash2, Droplets, Home, Flower, Pencil } from 'lucide-react';
 import { MilkIcon } from './icons';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -27,6 +27,7 @@ import { DateRangePicker } from './ui/date-range-picker';
 type PaymentsHistoryTableProps = {
   records: PaymentRecord[];
   onRemoveRecord: (id: string) => void;
+  onEditRecord: (record: PaymentRecord) => void;
   filter: string;
   onFilterChange: (value: string) => void;
   dateRange: { from: Date | null, to: Date | null };
@@ -48,7 +49,7 @@ const getItemIcon = (item: PaymentRecord['item']) => {
   }
 }
 
-export function PaymentsHistoryTable({ records, onRemoveRecord, filter, onFilterChange, dateRange, onDateRangeChange }: PaymentsHistoryTableProps) {
+export function PaymentsHistoryTable({ records, onRemoveRecord, onEditRecord, filter, onFilterChange, dateRange, onDateRangeChange }: PaymentsHistoryTableProps) {
   
   return (
     <Card>
@@ -104,6 +105,9 @@ export function PaymentsHistoryTable({ records, onRemoveRecord, filter, onFilter
                     <TableCell className="text-sm text-muted-foreground">{record.reason || '-'}</TableCell>
                     <TableCell className="text-right">{record.amount.toFixed(2)} PKR</TableCell>
                     <TableCell className="text-right">
+                       <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => onEditRecord(record)}>
+                          <Pencil className="h-4 w-4" />
+                       </Button>
                        <AlertDialog>
                         <AlertDialogTrigger asChild>
                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
@@ -142,5 +146,7 @@ export function PaymentsHistoryTable({ records, onRemoveRecord, filter, onFilter
     </Card>
   );
 }
+
+    
 
     
