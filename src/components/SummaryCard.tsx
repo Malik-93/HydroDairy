@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { Button } from "./ui/button";
@@ -31,9 +32,9 @@ export function SummaryCard({ title, value, icon, bill, totalBill, className, on
             Total Dues: <span className="font-bold">{totalBill.toFixed(2)} PKR</span>
         </p>
         {onSettleBill && (
-            <Button variant="ghost" size="sm" className="text-xs h-auto px-2 py-1" onClick={onSettleBill} disabled={bill <= 0}>
+            <Button variant="ghost" size="sm" className="text-xs h-auto px-2 py-1" onClick={onSettleBill} disabled={totalBill <= 0}>
                 <Receipt className="h-3 w-3 mr-1"/>
-                Settle Bill
+                Add Payment
             </Button>
         )}
       </CardFooter>

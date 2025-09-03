@@ -1,9 +1,9 @@
 
 "use client"
 
-import type { DeliveryRecord } from '@/lib/types';
+import type { DeliveryRecord, Rates } from '@/lib/types';
 import { format } from 'date-fns';
-import { Trash2, Droplets, Pencil, Home, Flower } from 'lucide-react';
+import { Trash2, Droplets, Home, Flower } from 'lucide-react';
 import { MilkIcon } from './icons';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -23,10 +23,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-type DeliveriesTableProps = {
+type PaymentsHistoryTableProps = {
   records: DeliveryRecord[];
+  rates: Rates;
   onRemoveRecord: (id: string) => void;
-  onEditRecord: (record: DeliveryRecord) => void;
   filter: string;
   onFilterChange: (value: string) => void;
 };
@@ -46,26 +46,21 @@ const getItemIcon = (item: DeliveryRecord['item']) => {
   }
 }
 
-const getStatusBadgeVariant = (status: DeliveryRecord['status']) => {
-    switch (status) {
-        case 'delivered':
-            return 'outline';
-        case 'returned':
-            return 'destructive';
-        case 'paid':
-            return 'default';
-        default:
-            return 'secondary';
-    }
-}
+export function PaymentsHistoryTable({ records, rates, onRemoveRecord, filter, onFilterChange }: PaymentsHistoryTableProps) {
+  
+  const getPaidAmount = (record: DeliveryRecord) => {
+    const rate = rates[record.item] || 0;
+    // payment quantity is negative
+    const amount = Math.abs(record.quantity) * rate;
+    return amount.toFixed(2);
+  }
 
-export function DeliveriesTable({ records, onRemoveRecord, onEditRecord, filter, onFilterChange }: DeliveriesTableProps) {
   return (
     <Card>
       <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-            <CardTitle>Delivery History</CardTitle>
-            <CardDescription>A log of all your past deliveries and services.</CardDescription>
+            <CardTitle>Payment History</CardTitle>
+            <CardDescription>A log of all your past payments.</CardDescription>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
             <Select value={filter} onValueChange={onFilterChange}>
@@ -89,8 +84,7 @@ export function DeliveriesTable({ records, onRemoveRecord, onEditRecord, filter,
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Item / Service</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Quantity / Visits</TableHead>
+                <TableHead className="text-right">Amount Paid</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -100,21 +94,13 @@ export function DeliveriesTable({ records, onRemoveRecord, onEditRecord, filter,
                   <TableRow key={record.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell className="font-medium">{format(new Date(record.date), 'PPP')}</TableCell>
                     <TableCell>
-                      <Badge variant={record.item === 'milk' ? 'secondary' : record.item === 'water' ? 'default' : record.item === 'house-cleaning' ? 'outline' : 'destructive'} className="capitalize flex items-center gap-1 w-fit">
+                      <Badge variant="default" className="capitalize flex items-center gap-1 w-fit">
                         {getItemIcon(record.item)}
                         {record.item.replace('-', ' ')}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusBadgeVariant(record.status)} className="capitalize">
-                        {record.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">{record.quantity.toFixed(record.item === 'milk' || record.item === 'water' ? 2 : 0)}</TableCell>
+                    <TableCell className="text-right">{getPaidAmount(record)} PKR</TableCell>
                     <TableCell className="text-right">
-                       <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => onEditRecord(record)} disabled={record.status === 'paid'}>
-                          <Pencil className="h-4 w-4" />
-                       </Button>
                        <AlertDialog>
                         <AlertDialogTrigger asChild>
                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
@@ -125,7 +111,7 @@ export function DeliveriesTable({ records, onRemoveRecord, onEditRecord, filter,
                           <AlertDialogHeader>
                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete this record.
+                              This action cannot be undone. This will permanently delete this payment record.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -141,8 +127,8 @@ export function DeliveriesTable({ records, onRemoveRecord, onEditRecord, filter,
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
-                    No deliveries recorded for this filter.
+                  <TableCell colSpan={4} className="h-24 text-center">
+                    No payments recorded for this filter.
                   </TableCell>
                 </TableRow>
               )}

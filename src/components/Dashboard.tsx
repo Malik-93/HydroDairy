@@ -26,6 +26,9 @@ import Link from 'next/link';
 import { Button } from './ui/button';
 import { startOfMonth } from 'date-fns';
 import { DateRangePicker } from './ui/date-range-picker';
+import { PaymentsHistoryTable } from './PaymentsHistoryTable';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
 
 type PaymentState = {
     item: Item | null,
@@ -177,13 +180,22 @@ export default function Dashboard() {
     return result;
   }, [records, dateRange]);
 
-  const displayedRecords = useMemo(() => {
+  const deliveryRecords = useMemo(() => {
+    const nonPaidRecords = filteredRecords.filter(r => r.status !== 'paid');
     if (itemFilter !== 'all') {
-      return filteredRecords.filter((record) => record.item === itemFilter);
+      return nonPaidRecords.filter((record) => record.item === itemFilter);
     }
-    return filteredRecords;
+    return nonPaidRecords;
   }, [filteredRecords, itemFilter]);
-  
+
+  const paymentRecords = useMemo(() => {
+    const paidRecords = filteredRecords.filter(r => r.status === 'paid');
+    if (itemFilter !== 'all') {
+      return paidRecords.filter((record) => record.item === itemFilter);
+    }
+    return paidRecords;
+  }, [filteredRecords, itemFilter]);
+
   const summary = useMemo(() => {
     if (!isMounted) {
         return {
@@ -193,7 +205,7 @@ export default function Dashboard() {
             daysWithoutDelivery: { milk: null, water: null, houseCleaning: null, gardener: null }
         };
     }
-    const totals = calculateTotals(filteredRecords);
+    const totals = calculateTotals(filteredRecords.filter(r => r.status !== 'paid'));
     const bill = calculateBill(totals, rates);
 
     const allRecordsTotals = calculateTotals(records);
@@ -236,7 +248,7 @@ export default function Dashboard() {
             icon={<MilkIcon className="h-6 w-6 text-muted-foreground" />}
             bill={summary.bill.milkBill}
             totalBill={summary.allRecordsBill.milkBill}
-            onSettleBill={() => setPaymentState({ item: 'milk', amount: summary.bill.milkBill })}
+            onSettleBill={() => setPaymentState({ item: 'milk', amount: summary.allRecordsBill.milkBill })}
             className="bg-accent/20"
           />
           <SummaryCard
@@ -245,7 +257,7 @@ export default function Dashboard() {
             icon={<Droplets className="h-6 w-6 text-muted-foreground" />}
             bill={summary.bill.waterBill}
             totalBill={summary.allRecordsBill.waterBill}
-            onSettleBill={() => setPaymentState({ item: 'water', amount: summary.bill.waterBill })}
+            onSettleBill={() => setPaymentState({ item: 'water', amount: summary.allRecordsBill.waterBill })}
             className="bg-primary/20"
           />
           <SummaryCard
@@ -254,7 +266,7 @@ export default function Dashboard() {
             icon={<Home className="h-6 w-6 text-muted-foreground" />}
             bill={summary.bill.houseCleaningBill}
             totalBill={summary.allRecordsBill.houseCleaningBill}
-            onSettleBill={() => setPaymentState({ item: 'house-cleaning', amount: summary.bill.houseCleaningBill })}
+            onSettleBill={() => setPaymentState({ item: 'house-cleaning', amount: summary.allRecordsBill.houseCleaningBill })}
             className="bg-green-500/20"
           />
           <SummaryCard
@@ -263,7 +275,7 @@ export default function Dashboard() {
             icon={<Flower className="h-6 w-6 text-muted-foreground" />}
             bill={summary.bill.gardenerBill}
             totalBill={summary.allRecordsBill.gardenerBill}
-            onSettleBill={() => setPaymentState({ item: 'gardener', amount: summary.bill.gardenerBill })}
+            onSettleBill={() => setPaymentState({ item: 'gardener', amount: summary.allRecordsBill.gardenerBill })}
             className="bg-purple-500/20"
           />
         </div>
@@ -274,13 +286,30 @@ export default function Dashboard() {
               <ReminderCard daysWithoutDelivery={summary.daysWithoutDelivery} />
             </div>
             <div className="lg:col-span-3">
-              <DeliveriesTable 
-                records={displayedRecords} 
-                onRemoveRecord={handleRemoveRecord} 
-                onEditRecord={setEditingRecord}
-                filter={itemFilter}
-                onFilterChange={setItemFilter}
-              />
+              <Tabs defaultValue="deliveries">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="deliveries">Delivery History</TabsTrigger>
+                  <TabsTrigger value="payments">Payment History</TabsTrigger>
+                </TabsList>
+                <TabsContent value="deliveries">
+                  <DeliveriesTable 
+                    records={deliveryRecords} 
+                    onRemoveRecord={handleRemoveRecord} 
+                    onEditRecord={setEditingRecord}
+                    filter={itemFilter}
+                    onFilterChange={setItemFilter}
+                  />
+                </TabsContent>
+                <TabsContent value="payments">
+                    <PaymentsHistoryTable
+                      records={paymentRecords}
+                      rates={rates}
+                      onRemoveRecord={handleRemoveRecord}
+                      filter={itemFilter}
+                      onFilterChange={setItemFilter}
+                    />
+                </TabsContent>
+              </Tabs>
             </div>
         </div>
       </main>
@@ -294,7 +323,7 @@ export default function Dashboard() {
        {paymentState.item && (
         <AddPaymentDialog
             item={paymentState.item}
-            prefilledAmount={paymentState.amount}
+            prefilledAmount={paymentState.amount > 0 ? paymentState.amount : 0}
             onAddPayment={handleAddPayment}
             onOpenChange={(isOpen) => !isOpen && setPaymentState({ item: null, amount: 0 })}
         />
