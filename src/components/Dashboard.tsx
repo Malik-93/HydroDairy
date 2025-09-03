@@ -176,24 +176,24 @@ export default function Dashboard() {
       setPaymentState({ item: null, amount: 0 });
   }
   
-  const filteredDeliveryRecords = useMemo(() => {
-    let result = deliveryRecords;
-
+  const dateFilteredDeliveryRecords = useMemo(() => {
     const fromDate = deliveryDateRange.from ? new Date(deliveryDateRange.from.setHours(0, 0, 0, 0)) : null;
     const toDate = deliveryDateRange.to ? new Date(deliveryDateRange.to.setHours(23, 59, 59, 999)) : null;
 
-    result = result.filter((record) => {
+    return deliveryRecords.filter((record) => {
         const recordDate = new Date(record.date);
         if (fromDate && recordDate < fromDate) return false;
         if (toDate && recordDate > toDate) return false;
         return true;
     });
+  }, [deliveryRecords, deliveryDateRange]);
 
+  const filteredDeliveryRecordsForTable = useMemo(() => {
     if (deliveryItemFilter !== 'all') {
-      return result.filter((record) => record.item === deliveryItemFilter);
+      return dateFilteredDeliveryRecords.filter((record) => record.item === deliveryItemFilter);
     }
-    return result;
-  }, [deliveryRecords, deliveryDateRange, deliveryItemFilter]);
+    return dateFilteredDeliveryRecords;
+  }, [dateFilteredDeliveryRecords, deliveryItemFilter]);
 
   const filteredPaymentRecords = useMemo(() => {
     let result = paymentRecords;
@@ -227,7 +227,7 @@ export default function Dashboard() {
         };
     }
     // Bill for the selected period
-    const periodTotals = calculateTotals(filteredDeliveryRecords);
+    const periodTotals = calculateTotals(dateFilteredDeliveryRecords);
     const periodBill = calculateBill(periodTotals, rates);
     
     // Total outstanding bill
@@ -243,7 +243,7 @@ export default function Dashboard() {
     
     const daysWithoutDelivery = calculateDaysWithoutDelivery(deliveryRecords);
     return { totals: periodTotals, bill: periodBill, totalBill: totalBill, daysWithoutDelivery };
-  }, [filteredDeliveryRecords, isMounted, rates, deliveryRecords, paymentRecords]);
+  }, [dateFilteredDeliveryRecords, isMounted, rates, deliveryRecords, paymentRecords]);
   
   if (isLoading && !isMounted) {
     return (
@@ -323,7 +323,7 @@ export default function Dashboard() {
                 </TabsList>
                 <TabsContent value="deliveries">
                   <DeliveriesTable 
-                    records={filteredDeliveryRecords} 
+                    records={filteredDeliveryRecordsForTable} 
                     onRemoveRecord={handleRemoveDeliveryRecord} 
                     onEditRecord={setEditingRecord}
                     filter={deliveryItemFilter}
