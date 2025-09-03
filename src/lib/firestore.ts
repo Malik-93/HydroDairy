@@ -33,6 +33,7 @@ type FirestorePaymentRecord = {
     date: Timestamp;
     item: 'milk' | 'water' | 'house-cleaning' | 'gardener';
     amount: number;
+    reason?: string;
 }
 
 // Converts a Firestore doc to a client-side DeliveryRecord
@@ -54,6 +55,7 @@ const paymentFromFirestore = (doc: any): PaymentRecord => {
         date: data.date.toDate().toISOString(),
         item: data.item,
         amount: data.amount,
+        reason: data.reason || '',
     }
 }
 
@@ -98,6 +100,7 @@ export const addPaymentRecord = async (record: Omit<PaymentRecord, 'id'>) => {
         date: Timestamp.fromDate(new Date(record.date)),
         item: record.item,
         amount: record.amount,
+        reason: record.reason || '',
     });
     return docRef.id;
 }

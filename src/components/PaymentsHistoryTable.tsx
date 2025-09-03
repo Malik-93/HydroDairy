@@ -85,6 +85,7 @@ export function PaymentsHistoryTable({ records, onRemoveRecord, filter, onFilter
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Item / Service</TableHead>
+                <TableHead>Reason</TableHead>
                 <TableHead className="text-right">Amount Paid</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -100,6 +101,7 @@ export function PaymentsHistoryTable({ records, onRemoveRecord, filter, onFilter
                         {record.item.replace('-', ' ')}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{record.reason || '-'}</TableCell>
                     <TableCell className="text-right">{record.amount.toFixed(2)} PKR</TableCell>
                     <TableCell className="text-right">
                        <AlertDialog>
@@ -128,7 +130,7 @@ export function PaymentsHistoryTable({ records, onRemoveRecord, filter, onFilter
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
+                  <TableCell colSpan={5} className="h-24 text-center">
                     No payments recorded for this filter.
                   </TableCell>
                 </TableRow>

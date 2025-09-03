@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils"
 import type { Item, PaymentRecord } from "@/lib/types"
 import { useEffect } from "react"
+import { Textarea } from "./ui/textarea"
 
 const formSchema = z.object({
   date: z.date({
@@ -24,6 +25,7 @@ const formSchema = z.object({
   amount: z.coerce.number().min(0.1, {
     message: "Amount must be greater than 0.",
   }),
+  reason: z.string().optional(),
 });
 
 type AddPaymentDialogProps = {
@@ -42,6 +44,7 @@ export function AddPaymentDialog({ item, onAddPayment, onOpenChange, prefilledAm
     form.reset({
       date: new Date(),
       amount: prefilledAmount > 0 ? prefilledAmount : 0,
+      reason: "",
     });
   }, [item, form, prefilledAmount]);
 
@@ -50,6 +53,7 @@ export function AddPaymentDialog({ item, onAddPayment, onOpenChange, prefilledAm
         item: item,
         amount: values.amount,
         date: values.date.toISOString(),
+        reason: values.reason,
     });
   }
 
@@ -108,6 +112,20 @@ export function AddPaymentDialog({ item, onAddPayment, onOpenChange, prefilledAm
                     <FormLabel>Amount (PKR)</FormLabel>
                     <FormControl>
                         <Input type="number" step="1" placeholder="e.g., 1000" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+
+                <FormField
+                control={form.control}
+                name="reason"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Reason (Optional)</FormLabel>
+                    <FormControl>
+                        <Textarea placeholder="e.g., Advance payment for June" {...field} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>

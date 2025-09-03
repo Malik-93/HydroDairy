@@ -13,6 +13,7 @@ export interface PaymentRecord {
     date: string; // ISO date format string
     item: Item;
     amount: number;
+    reason?: string;
 }
 
 export interface Rates {
