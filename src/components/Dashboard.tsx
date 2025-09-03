@@ -203,7 +203,7 @@ export default function Dashboard() {
     return { totals, bill, allRecordsBill, daysWithoutDelivery };
   }, [filteredRecords, isMounted, rates, records]);
   
-  if (isLoading && isMounted) {
+  if (isLoading && !isMounted) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-xl">Loading delivery data...</div>
