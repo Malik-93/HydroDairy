@@ -25,6 +25,7 @@ import { DEFAULT_RATES } from '@/lib/constants';
 import Link from 'next/link';
 import { Button } from './ui/button';
 import { startOfMonth } from 'date-fns';
+import { DateRangePicker } from './ui/date-range-picker';
 
 export default function Dashboard() {
   const [isMounted, setIsMounted] = useState(false);
@@ -158,9 +159,6 @@ export default function Dashboard() {
   
   const filteredRecords = useMemo(() => {
     let result = records;
-    if (itemFilter !== 'all') {
-      result = result.filter((record) => record.item === itemFilter);
-    }
 
     const fromDate = dateRange.from ? new Date(dateRange.from.setHours(0, 0, 0, 0)) : null;
     const toDate = dateRange.to ? new Date(dateRange.to.setHours(23, 59, 59, 999)) : null;
@@ -173,7 +171,14 @@ export default function Dashboard() {
     });
 
     return result;
-  }, [records, itemFilter, dateRange]);
+  }, [records, dateRange]);
+
+  const displayedRecords = useMemo(() => {
+    if (itemFilter !== 'all') {
+      return filteredRecords.filter((record) => record.item === itemFilter);
+    }
+    return filteredRecords;
+  }, [filteredRecords, itemFilter]);
   
   const summary = useMemo(() => {
     if (!isMounted) {
@@ -183,11 +188,14 @@ export default function Dashboard() {
             daysWithoutDelivery: { milk: null, water: null, houseCleaning: null, gardener: null }
         };
     }
-    const totals = calculateTotals(records);
+    // Calculate summary based on filtered records
+    const totals = calculateTotals(filteredRecords);
     const bill = calculateBill(totals, rates);
+
+    // This should probably be calculated based on all records, not filtered ones.
     const daysWithoutDelivery = { milk: null, water: null, houseCleaning: null, gardener: null };
     return { totals, bill, daysWithoutDelivery };
-  }, [records, isMounted, rates]);
+  }, [filteredRecords, isMounted, rates]);
   
   if (isLoading && isMounted) {
     return (
@@ -201,12 +209,18 @@ export default function Dashboard() {
     <div className="flex min-h-screen w-full flex-col">
       <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6 justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Household Tracker</h1>
-        <Link href="/settings">
-          <Button variant="outline" size="icon">
-            <Settings className="h-4 w-4" />
-            <span className="sr-only">Settings</span>
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <DateRangePicker 
+              date={dateRange}
+              onDateChange={setDateRange}
+          />
+          <Link href="/settings">
+            <Button variant="outline" size="icon">
+              <Settings className="h-4 w-4" />
+              <span className="sr-only">Settings</span>
+            </Button>
+          </Link>
+        </div>
       </header>
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">
@@ -251,13 +265,11 @@ export default function Dashboard() {
             </div>
             <div className="lg:col-span-3">
               <DeliveriesTable 
-                records={filteredRecords} 
+                records={displayedRecords} 
                 onRemoveRecord={handleRemoveRecord} 
                 onEditRecord={setEditingRecord}
                 filter={itemFilter}
                 onFilterChange={setItemFilter}
-                dateRange={dateRange}
-                onDateRangeChange={setDateRange}
               />
             </div>
         </div>
