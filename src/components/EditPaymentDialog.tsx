@@ -189,7 +189,7 @@ export function EditPaymentDialog({ record, onUpdateRecord, onOpenChange }: Edit
                         <FormItem>
                             <FormLabel>Receipt Attachment</FormLabel>
                              <FormControl>
-                                <>
+                                <div>
                                     {currentAttachment ? (
                                         <div className="relative group w-full h-40 rounded-md border overflow-hidden">
                                             <Image src={currentAttachment} alt="Receipt" layout="fill" objectFit="cover" />
@@ -210,7 +210,7 @@ export function EditPaymentDialog({ record, onUpdateRecord, onOpenChange }: Edit
                                             onError={(error) => console.error(error)}
                                         />
                                     )}
-                                </>
+                                </div>
                             </FormControl>
                             <FormMessage />
                         </FormItem>
