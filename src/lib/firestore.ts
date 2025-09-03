@@ -35,6 +35,7 @@ type FirestorePaymentRecord = {
     item: 'milk' | 'water' | 'house-cleaning' | 'gardener';
     amount: number;
     reason?: string;
+    attachment?: string;
 }
 
 // Converts a Firestore doc to a client-side DeliveryRecord
@@ -57,6 +58,7 @@ const paymentFromFirestore = (doc: any): PaymentRecord => {
         item: data.item,
         amount: data.amount,
         reason: data.reason || '',
+        attachment: data.attachment || '',
     }
 }
 
@@ -102,6 +104,7 @@ export const addPaymentRecord = async (record: Omit<PaymentRecord, 'id'>) => {
         item: record.item,
         amount: record.amount,
         reason: record.reason || '',
+        attachment: record.attachment || '',
     });
     return docRef.id;
 }
@@ -156,5 +159,3 @@ export const updateRates = async (newRates: Rates) => {
   const docRef = doc(db, RATES_DOCUMENT, 'currentRates');
   await setDoc(docRef, newRates);
 };
-
-    

@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { format } from "date-fns"
-import { CalendarIcon, Droplets, Flower, Home } from "lucide-react"
+import { CalendarIcon, Droplets, Flower, Home, Link as LinkIcon, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -19,6 +19,9 @@ import { useEffect } from "react"
 import { Textarea } from "./ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { MilkIcon } from "./icons"
+import { ImageKitUploader } from "./ImageKitUploader"
+import Image from "next/image"
+import Link from "next/link"
 
 const formSchema = z.object({
   date: z.date({
@@ -31,6 +34,7 @@ const formSchema = z.object({
     message: "Amount must be greater than 0.",
   }),
   reason: z.string().optional(),
+  attachment: z.string().optional(),
 });
 
 type EditPaymentDialogProps = {
@@ -50,6 +54,7 @@ export function EditPaymentDialog({ record, onUpdateRecord, onOpenChange }: Edit
       item: record.item,
       amount: record.amount,
       reason: record.reason || "",
+      attachment: record.attachment || "",
     });
   }, [record, form]);
 
@@ -61,6 +66,8 @@ export function EditPaymentDialog({ record, onUpdateRecord, onOpenChange }: Edit
     }
     await onUpdateRecord(updatedRecord);
   }
+
+  const currentAttachment = form.watch('attachment');
 
   return (
     <Dialog open={!!record} onOpenChange={onOpenChange}>
@@ -175,6 +182,40 @@ export function EditPaymentDialog({ record, onUpdateRecord, onOpenChange }: Edit
                     </FormItem>
                 )}
                 />
+                <FormField
+                    control={form.control}
+                    name="attachment"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Receipt Attachment</FormLabel>
+                             <FormControl>
+                                <>
+                                    {currentAttachment ? (
+                                        <div className="relative group w-full h-40 rounded-md border overflow-hidden">
+                                            <Image src={currentAttachment} alt="Receipt" layout="fill" objectFit="cover" />
+                                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Link href={currentAttachment} target="_blank" passHref>
+                                                    <Button variant="outline" size="icon" className="text-white">
+                                                        <LinkIcon className="h-4 w-4" />
+                                                    </Button>
+                                                </Link>
+                                                <Button variant="destructive" size="icon" className="ml-2" onClick={() => field.onChange("")}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <ImageKitUploader 
+                                            onSuccess={(result) => field.onChange(result.url)}
+                                            onError={(error) => console.error(error)}
+                                        />
+                                    )}
+                                </>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
                     <Button type="submit" className="transition-all duration-300" disabled={form.formState.isSubmitting}>
@@ -187,5 +228,3 @@ export function EditPaymentDialog({ record, onUpdateRecord, onOpenChange }: Edit
     </Dialog>
   );
 }
-
-    

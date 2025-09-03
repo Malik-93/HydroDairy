@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils"
 import type { Item, PaymentRecord } from "@/lib/types"
 import { useEffect } from "react"
 import { Textarea } from "./ui/textarea"
+import { ImageKitUploader } from "./ImageKitUploader"
 
 const formSchema = z.object({
   date: z.date({
@@ -26,6 +27,7 @@ const formSchema = z.object({
     message: "Amount must be greater than 0.",
   }),
   reason: z.string().optional(),
+  attachment: z.string().optional(),
 });
 
 type AddPaymentDialogProps = {
@@ -45,6 +47,7 @@ export function AddPaymentDialog({ item, onAddPayment, onOpenChange, prefilledAm
       date: new Date(),
       amount: prefilledAmount > 0 ? prefilledAmount : 0,
       reason: "",
+      attachment: "",
     });
   }, [item, form, prefilledAmount]);
 
@@ -54,6 +57,7 @@ export function AddPaymentDialog({ item, onAddPayment, onOpenChange, prefilledAm
         amount: values.amount,
         date: values.date.toISOString(),
         reason: values.reason,
+        attachment: values.attachment,
     });
   }
 
@@ -131,6 +135,24 @@ export function AddPaymentDialog({ item, onAddPayment, onOpenChange, prefilledAm
                     </FormItem>
                 )}
                 />
+
+                <FormField
+                    control={form.control}
+                    name="attachment"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Attach Receipt (Optional)</FormLabel>
+                            <FormControl>
+                               <ImageKitUploader 
+                                 onSuccess={(result) => field.onChange(result.url)}
+                                 onError={(error) => console.error(error)}
+                               />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
                     <Button type="submit" className="transition-all duration-300" disabled={form.formState.isSubmitting}>

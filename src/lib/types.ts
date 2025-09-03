@@ -14,6 +14,7 @@ export interface PaymentRecord {
     item: Item;
     amount: number;
     reason?: string;
+    attachment?: string; // URL to the uploaded file
 }
 
 export interface Rates {

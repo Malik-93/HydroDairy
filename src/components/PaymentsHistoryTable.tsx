@@ -3,7 +3,7 @@
 
 import type { PaymentRecord } from '@/lib/types';
 import { format } from 'date-fns';
-import { Trash2, Droplets, Home, Flower, Pencil } from 'lucide-react';
+import { Trash2, Droplets, Home, Flower, Pencil, Paperclip } from 'lucide-react';
 import { MilkIcon } from './icons';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DateRangePicker } from './ui/date-range-picker';
+import Link from 'next/link';
 
 type PaymentsHistoryTableProps = {
   records: PaymentRecord[];
@@ -87,6 +88,7 @@ export function PaymentsHistoryTable({ records, onRemoveRecord, onEditRecord, fi
                 <TableHead>Date</TableHead>
                 <TableHead>Item / Service</TableHead>
                 <TableHead>Reason</TableHead>
+                <TableHead>Attachment</TableHead>
                 <TableHead className="text-right">Amount Paid</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -103,6 +105,17 @@ export function PaymentsHistoryTable({ records, onRemoveRecord, onEditRecord, fi
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{record.reason || '-'}</TableCell>
+                    <TableCell>
+                      {record.attachment ? (
+                        <Link href={record.attachment} target="_blank" passHref>
+                          <Button variant="outline" size="icon" className="h-8 w-8">
+                             <Paperclip className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                      ) : (
+                        '-'
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">{record.amount.toFixed(2)} PKR</TableCell>
                     <TableCell className="text-right">
                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => onEditRecord(record)}>
@@ -134,7 +147,7 @@ export function PaymentsHistoryTable({ records, onRemoveRecord, onEditRecord, fi
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     No payments recorded for this filter.
                   </TableCell>
                 </TableRow>
@@ -146,7 +159,3 @@ export function PaymentsHistoryTable({ records, onRemoveRecord, onEditRecord, fi
     </Card>
   );
 }
-
-    
-
-    
