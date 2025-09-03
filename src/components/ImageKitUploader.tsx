@@ -2,7 +2,7 @@
 "use client";
 
 import { IKContext, IKUpload } from 'imagekitio-react';
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Loader2, UploadCloud } from 'lucide-react';
 
@@ -19,7 +19,12 @@ const authenticator = async () => {
 };
 
 export function ImageKitUploader({ onSuccess, onError }: ImageKitUploaderProps) {
-  const ikUploadRef = useRef<HTMLInputElement>(null);
+  const ikUploadRef = useRef<any>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   if (!urlEndpoint || !publicKey) {
     return (
@@ -46,7 +51,7 @@ export function ImageKitUploader({ onSuccess, onError }: ImageKitUploaderProps) 
         responseFields={["isPrivateFile", "tags", "customCoordinates", "metadata"]}
       />
       
-      {ikUploadRef.current ? (
+      {isMounted && ikUploadRef.current ? (
          <Button type="button" onClick={() => ikUploadRef.current?.click()}>
             <UploadCloud className="mr-2 h-4 w-4" />
             Upload File
