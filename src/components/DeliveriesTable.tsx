@@ -2,7 +2,7 @@
 
 import type { DeliveryRecord } from '@/lib/types';
 import { format } from 'date-fns';
-import { Trash2, Droplets, Pencil, Home, Flower } from 'lucide-react';
+import { Trash2, Droplets, Pencil, Home, Flower, Receipt } from 'lucide-react';
 import { MilkIcon } from './icons';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -44,6 +44,19 @@ const getItemIcon = (item: DeliveryRecord['item']) => {
     default:
       return null;
   }
+}
+
+const getStatusBadgeVariant = (status: DeliveryRecord['status']) => {
+    switch (status) {
+        case 'delivered':
+            return 'outline';
+        case 'returned':
+            return 'destructive';
+        case 'paid':
+            return 'default';
+        default:
+            return 'secondary';
+    }
 }
 
 export function DeliveriesTable({ records, onRemoveRecord, onEditRecord, filter, onFilterChange }: DeliveriesTableProps) {
@@ -93,13 +106,13 @@ export function DeliveriesTable({ records, onRemoveRecord, onEditRecord, filter,
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={record.status === 'delivered' ? 'outline' : 'destructive'} className="capitalize">
+                      <Badge variant={getStatusBadgeVariant(record.status)} className="capitalize">
                         {record.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">{record.quantity.toFixed(record.item === 'milk' || record.item === 'water' ? 2 : 0)}</TableCell>
                     <TableCell className="text-right">
-                       <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => onEditRecord(record)}>
+                       <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => onEditRecord(record)} disabled={record.status === 'paid'}>
                           <Pencil className="h-4 w-4" />
                        </Button>
                        <AlertDialog>

@@ -4,27 +4,28 @@ import { differenceInDays, parseISO, startOfToday } from 'date-fns';
 export const calculateTotals = (records: DeliveryRecord[]) => {
   return records.reduce(
     (acc, record) => {
+      // payment is stored as negative quantity
       const quantity = record.status === 'returned' ? -record.quantity : record.quantity;
       if (record.item === 'milk') {
         acc.milk += quantity;
       } else if (record.item === 'water') {
         acc.water += quantity;
       } else if (record.item === 'house-cleaning') {
-        acc.houseCleaning += quantity;
+        acc['house-cleaning'] += quantity;
       } else if (record.item === 'gardener') {
         acc.gardener += quantity;
       }
       return acc;
     },
-    { milk: 0, water: 0, houseCleaning: 0, gardener: 0 }
+    { milk: 0, water: 0, 'house-cleaning': 0, gardener: 0 }
   );
 };
 
-export const calculateBill = (totals: { milk: number; water: number; houseCleaning: number; gardener: number }, rates: Rates) => {
+export const calculateBill = (totals: { milk: number; water: number; 'house-cleaning': number; gardener: number }, rates: Rates) => {
   return {
     milkBill: totals.milk * rates.milk,
     waterBill: totals.water * rates.water,
-    houseCleaningBill: totals.houseCleaning * rates['house-cleaning'],
+    houseCleaningBill: totals['house-cleaning'] * rates['house-cleaning'],
     gardenerBill: totals.gardener * rates.gardener,
   };
 };

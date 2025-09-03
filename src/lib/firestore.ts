@@ -25,7 +25,7 @@ type FirestoreDeliveryRecord = {
   date: Timestamp;
   item: 'milk' | 'water' | 'house-cleaning' | 'gardener';
   quantity: number;
-  status: 'delivered' | 'returned';
+  status: 'delivered' | 'returned' | 'paid';
 };
 
 // Converts a Firestore doc to a client-side DeliveryRecord

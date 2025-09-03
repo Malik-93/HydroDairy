@@ -1,8 +1,9 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import type { DeliveryRecord, Rates } from '@/lib/types';
+import type { DeliveryRecord, Rates, Item } from '@/lib/types';
 import { calculateTotals, calculateBill } from '@/lib/calculations';
 import {
   getDeliveryRecords,
@@ -10,7 +11,6 @@ import {
   updateDeliveryRecord,
   deleteDeliveryRecord,
   getRates,
-  deleteRecordsByItem,
 } from '@/lib/firestore';
 import { DeliveryForm } from './DeliveryForm';
 import { DeliveriesTable } from './DeliveriesTable';
@@ -19,29 +19,20 @@ import { ReminderCard } from './ReminderCard';
 import { MilkIcon } from './icons';
 import { Droplets, Home, Flower, Settings, Trash2 } from 'lucide-react';
 import { EditDeliveryDialog } from './EditDeliveryDialog';
+import { AddPaymentDialog } from './AddPaymentDialog';
 import { useToast } from '@/hooks/use-toast';
 import { DEFAULT_RATES } from '@/lib/constants';
 import Link from 'next/link';
 import { Button } from './ui/button';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 export default function Dashboard() {
   const [isMounted, setIsMounted] = useState(false);
   const [records, setRecords] = useState<DeliveryRecord[]>([]);
   const [editingRecord, setEditingRecord] = useState<DeliveryRecord | null>(null);
+  const [itemToPay, setItemToPay] = useState<Item | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [rates, setRates] = useState<Rates>(DEFAULT_RATES);
   const [itemFilter, setItemFilter] = useState<string>('all');
-  const [itemToClear, setItemToClear] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -124,25 +115,40 @@ export default function Dashboard() {
     }
   };
 
-  const handleClearDues = async () => {
-    if (!itemToClear) return;
-    try {
-      await deleteRecordsByItem(itemToClear);
-      setRecords(records.filter((record) => record.item !== itemToClear));
-      toast({
-        title: "Dues Cleared!",
-        description: `All records for ${itemToClear.replace('-', ' ')} have been deleted.`,
-      });
-    } catch (error) {
-      console.error("Error clearing dues: ", error);
-      toast({
-        variant: "destructive",
-        title: "Error clearing dues",
-        description: `Could not clear dues for ${itemToClear}. Please try again.`,
-      });
-    } finally {
-        setItemToClear(null);
-    }
+  const handleAddPayment = async (item: Item, amount: number, date: Date) => {
+      const rate = rates[item];
+      if (rate === 0) {
+           toast({
+             variant: "destructive",
+             title: "Error",
+             description: `Rate for ${item} is zero. Cannot add payment.`,
+           });
+           return;
+      }
+
+      const quantity = amount / rate;
+      
+      const paymentRecord: Omit<DeliveryRecord, 'id'> = {
+          date: date.toISOString(),
+          item: item,
+          quantity: -quantity, // Negative quantity to offset the total
+          status: 'paid'
+      };
+
+      try {
+        await handleAddRecord(paymentRecord);
+        toast({
+            title: "Payment Added",
+            description: `Payment of ${amount} PKR for ${item} has been recorded.`
+        })
+      } catch (e) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to add payment record.",
+        });
+      }
+      setItemToPay(null);
   }
   
   const filteredRecords = useMemo(() => {
@@ -155,7 +161,7 @@ export default function Dashboard() {
   const summary = useMemo(() => {
     if (!isMounted) {
         return {
-            totals: { milk: 0, water: 0, houseCleaning: 0, gardener: 0 },
+            totals: { milk: 0, water: 0, 'house-cleaning': 0, gardener: 0 },
             bill: { milkBill: 0, waterBill: 0, houseCleaningBill: 0, gardenerBill: 0 },
             daysWithoutDelivery: { milk: null, water: null, houseCleaning: null, gardener: null }
         };
@@ -192,7 +198,7 @@ export default function Dashboard() {
             value={`${summary.totals.milk.toFixed(2)} (KG)`}
             icon={<MilkIcon className="h-6 w-6 text-muted-foreground" />}
             footerText={`${summary.bill.milkBill.toFixed(2)} PKR`}
-            onClearDues={() => setItemToClear('milk')}
+            onAddPayment={() => setItemToPay('milk')}
             className="bg-accent/20"
           />
           <SummaryCard
@@ -200,15 +206,15 @@ export default function Dashboard() {
             value={`${summary.totals.water.toFixed(2)} (Bottles)`}
             icon={<Droplets className="h-6 w-6 text-muted-foreground" />}
             footerText={`${summary.bill.waterBill.toFixed(2)} PKR`}
-            onClearDues={() => setItemToClear('water')}
+            onAddPayment={() => setItemToPay('water')}
             className="bg-primary/20"
           />
           <SummaryCard
             title="House Cleaning Visits"
-            value={`${summary.totals.houseCleaning} visits`}
+            value={`${summary.totals['house-cleaning']} visits`}
             icon={<Home className="h-6 w-6 text-muted-foreground" />}
             footerText={`${summary.bill.houseCleaningBill.toFixed(2)} PKR`}
-            onClearDues={() => setItemToClear('house-cleaning')}
+            onAddPayment={() => setItemToPay('house-cleaning')}
             className="bg-green-500/20"
           />
           <SummaryCard
@@ -216,7 +222,7 @@ export default function Dashboard() {
             value={`${summary.totals.gardener} visits`}
             icon={<Flower className="h-6 w-6 text-muted-foreground" />}
             footerText={`${summary.bill.gardenerBill.toFixed(2)} PKR`}
-            onClearDues={() => setItemToClear('gardener')}
+            onAddPayment={() => setItemToPay('gardener')}
             className="bg-purple-500/20"
           />
         </div>
@@ -244,23 +250,13 @@ export default function Dashboard() {
           onOpenChange={(isOpen) => !isOpen && setEditingRecord(null)}
         />
       )}
-       <AlertDialog open={!!itemToClear} onOpenChange={(isOpen) => !isOpen && setItemToClear(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to clear these dues?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete all records for{' '}
-              <span className="font-semibold capitalize">{itemToClear?.replace('-', ' ')}</span>.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleClearDues} className="bg-destructive hover:bg-destructive/90">
-              Clear Dues
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+       {itemToPay && (
+        <AddPaymentDialog
+            item={itemToPay}
+            onAddPayment={handleAddPayment}
+            onOpenChange={(isOpen) => !isOpen && setItemToPay(null)}
+        />
+       )}
     </div>
   );
 }

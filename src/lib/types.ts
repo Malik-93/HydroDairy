@@ -1,9 +1,11 @@
+export type Item = 'milk' | 'water' | 'house-cleaning' | 'gardener';
+
 export interface DeliveryRecord {
   id: string;
   date: string; // ISO date format string
-  item: 'milk' | 'water' | 'house-cleaning' | 'gardener';
+  item: Item;
   quantity: number; // in liters or visits
-  status: 'delivered' | 'returned';
+  status: 'delivered' | 'returned' | 'paid';
 }
 
 export interface Rates {
