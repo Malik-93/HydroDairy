@@ -13,9 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import type { Item } from "@/lib/types"
+import type { Item, PaymentRecord } from "@/lib/types"
 import { useEffect } from "react"
 
 const formSchema = z.object({
@@ -29,13 +28,12 @@ const formSchema = z.object({
 
 type AddPaymentDialogProps = {
   item: Item,
-  onAddPayment: (item: Item, amount: number, date: Date) => Promise<void>;
+  onAddPayment: (payment: Omit<PaymentRecord, 'id'>) => Promise<void>;
   onOpenChange: (isOpen: boolean) => void;
   prefilledAmount?: number;
 }
 
 export function AddPaymentDialog({ item, onAddPayment, onOpenChange, prefilledAmount = 0 }: AddPaymentDialogProps) {
-  const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   });
@@ -48,7 +46,11 @@ export function AddPaymentDialog({ item, onAddPayment, onOpenChange, prefilledAm
   }, [item, form, prefilledAmount]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    await onAddPayment(item, values.amount, values.date);
+    await onAddPayment({
+        item: item,
+        amount: values.amount,
+        date: values.date.toISOString(),
+    });
   }
 
   return (

@@ -1,12 +1,12 @@
 
-import type { DeliveryRecord, Rates } from './types';
+import type { DeliveryRecord, Rates, PaymentRecord } from './types';
 import { differenceInDays, parseISO, startOfToday } from 'date-fns';
 
 export const calculateTotals = (records: DeliveryRecord[]) => {
   return records.reduce(
     (acc, record) => {
       // payment is stored as negative quantity
-      const quantity = record.status === 'returned' ? -record.quantity : record.quantity;
+      const quantity = record.status === 'returned' ? -Math.abs(record.quantity) : Math.abs(record.quantity);
       if (record.item === 'milk') {
         acc.milk += quantity;
       } else if (record.item === 'water') {
@@ -21,6 +21,24 @@ export const calculateTotals = (records: DeliveryRecord[]) => {
     { milk: 0, water: 0, 'house-cleaning': 0, gardener: 0 }
   );
 };
+
+export const calculatePayments = (records: PaymentRecord[]) => {
+    return records.reduce(
+        (acc, record) => {
+            if (record.item === 'milk') {
+                acc.milk += record.amount;
+            } else if (record.item === 'water') {
+                acc.water += record.amount;
+            } else if (record.item === 'house-cleaning') {
+                acc['house-cleaning'] += record.amount;
+            } else if (record.item === 'gardener') {
+                acc.gardener += record.amount;
+            }
+            return acc;
+        },
+        { milk: 0, water: 0, 'house-cleaning': 0, gardener: 0 }
+    )
+}
 
 export const calculateBill = (totals: { milk: number; water: number; 'house-cleaning': number; gardener: number }, rates: Rates) => {
   return {

@@ -30,7 +30,7 @@ const formSchema = z.object({
   quantity: z.coerce.number().min(0.1, {
     message: "Quantity must be greater than 0.",
   }),
-  status: z.enum(["delivered", "returned", "paid"]),
+  status: z.enum(["delivered", "returned"]),
 });
 
 type EditDeliveryDialogProps = {
@@ -65,7 +65,7 @@ export function EditDeliveryDialog({ record, onUpdateRecord, onOpenChange }: Edi
       ...record,
       ...values,
       date: values.date.toISOString(),
-      quantity: record.status === 'paid' ? -Math.abs(values.quantity) : values.quantity
+      quantity: values.quantity
     };
     await onUpdateRecord(updatedRecord);
     toast({

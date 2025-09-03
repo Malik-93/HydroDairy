@@ -52,8 +52,6 @@ const getStatusBadgeVariant = (status: DeliveryRecord['status']) => {
             return 'outline';
         case 'returned':
             return 'destructive';
-        case 'paid':
-            return 'default';
         default:
             return 'secondary';
     }
@@ -112,7 +110,7 @@ export function DeliveriesTable({ records, onRemoveRecord, onEditRecord, filter,
                     </TableCell>
                     <TableCell className="text-right">{record.quantity.toFixed(record.item === 'milk' || record.item === 'water' ? 2 : 0)}</TableCell>
                     <TableCell className="text-right">
-                       <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => onEditRecord(record)} disabled={record.status === 'paid'}>
+                       <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => onEditRecord(record)}>
                           <Pencil className="h-4 w-4" />
                        </Button>
                        <AlertDialog>

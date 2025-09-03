@@ -3,14 +3,17 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import type { DeliveryRecord, Rates, Item } from '@/lib/types';
-import { calculateTotals, calculateBill, calculateDaysWithoutDelivery } from '@/lib/calculations';
+import type { DeliveryRecord, Rates, Item, PaymentRecord } from '@/lib/types';
+import { calculateTotals, calculateBill, calculateDaysWithoutDelivery, calculatePayments } from '@/lib/calculations';
 import {
   getDeliveryRecords,
   addDeliveryRecord,
   updateDeliveryRecord,
   deleteDeliveryRecord,
   getRates,
+  addPaymentRecord,
+  getPaymentRecords,
+  deletePaymentRecord,
 } from '@/lib/firestore';
 import { DeliveryForm } from './DeliveryForm';
 import { DeliveriesTable } from './DeliveriesTable';
@@ -36,7 +39,8 @@ type PaymentState = {
 }
 export default function Dashboard() {
   const [isMounted, setIsMounted] = useState(false);
-  const [records, setRecords] = useState<DeliveryRecord[]>([]);
+  const [deliveryRecords, setDeliveryRecords] = useState<DeliveryRecord[]>([]);
+  const [paymentRecords, setPaymentRecords] = useState<PaymentRecord[]>([]);
   const [editingRecord, setEditingRecord] = useState<DeliveryRecord | null>(null);
   const [paymentState, setPaymentState] = useState<PaymentState>({ item: null, amount: 0 });
   const [isLoading, setIsLoading] = useState(true);
@@ -52,11 +56,13 @@ export default function Dashboard() {
     setIsMounted(true);
     const fetchInitialData = async () => {
       try {
-        const [fetchedRecords, fetchedRates] = await Promise.all([
+        const [fetchedDeliveries, fetchedPayments, fetchedRates] = await Promise.all([
           getDeliveryRecords(),
+          getPaymentRecords(),
           getRates(),
         ]);
-        setRecords(fetchedRecords);
+        setDeliveryRecords(fetchedDeliveries);
+        setPaymentRecords(fetchedPayments);
         if (fetchedRates) {
           setRates(fetchedRates);
         }
@@ -65,7 +71,7 @@ export default function Dashboard() {
         toast({
           variant: "destructive",
           title: "Error fetching data",
-          description: "Could not load delivery records or rates from the database.",
+          description: "Could not load records from the database.",
         });
       } finally {
         setIsLoading(false);
@@ -78,10 +84,10 @@ export default function Dashboard() {
     try {
       const newId = await addDeliveryRecord(newRecord);
       const recordWithId = { ...newRecord, id: newId };
-      const sortedRecords = [...records, recordWithId].sort(
+      const sortedRecords = [...deliveryRecords, recordWithId].sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
-      setRecords(sortedRecords);
+      setDeliveryRecords(sortedRecords);
     } catch (error) {
       console.error("Error adding record: ", error);
       toast({
@@ -95,13 +101,13 @@ export default function Dashboard() {
   const handleUpdateRecord = async (updatedRecord: DeliveryRecord) => {
     try {
       await updateDeliveryRecord(updatedRecord);
-      const updatedRecords = records.map((r) =>
+      const updatedRecords = deliveryRecords.map((r) =>
         r.id === updatedRecord.id ? updatedRecord : r
       );
       const sortedRecords = updatedRecords.sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
-      setRecords(sortedRecords);
+      setDeliveryRecords(sortedRecords);
       setEditingRecord(null);
     } catch (error) {
       console.error("Error updating record: ", error);
@@ -113,10 +119,10 @@ export default function Dashboard() {
     }
   };
 
-  const handleRemoveRecord = async (id: string) => {
+  const handleRemoveDeliveryRecord = async (id: string) => {
     try {
       await deleteDeliveryRecord(id);
-      setRecords(records.filter((record) => record.id !== id));
+      setDeliveryRecords(deliveryRecords.filter((record) => record.id !== id));
     } catch (error)
     {
       console.error("Error deleting record: ", error);
@@ -127,32 +133,33 @@ export default function Dashboard() {
       });
     }
   };
+  
+  const handleRemovePaymentRecord = async (id: string) => {
+    try {
+      await deletePaymentRecord(id);
+      setPaymentRecords(paymentRecords.filter((record) => record.id !== id));
+    } catch (error)
+    {
+      console.error("Error deleting payment: ", error);
+      toast({
+         variant: "destructive",
+         title: "Error",
+         description: "Failed to delete the payment record.",
+      });
+    }
+  }
 
-  const handleAddPayment = async (item: Item, amount: number, date: Date) => {
-      const rate = rates[item];
-      if (rate === 0 && amount > 0) {
-           toast({
-             variant: "destructive",
-             title: "Error",
-             description: `Rate for ${item} is zero. Cannot add payment.`,
-           });
-           return;
-      }
-
-      const quantity = rate > 0 ? amount / rate : 0;
-      
-      const paymentRecord: Omit<DeliveryRecord, 'id'> = {
-          date: date.toISOString(),
-          item: item,
-          quantity: -quantity, // Negative quantity to offset the total
-          status: 'paid'
-      };
-
+  const handleAddPayment = async (payment: Omit<PaymentRecord, 'id'>) => {
       try {
-        await handleAddRecord(paymentRecord);
+        const newId = await addPaymentRecord(payment);
+        const newPayment = { ...payment, id: newId };
+        const sortedPayments = [...paymentRecords, newPayment].sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        )
+        setPaymentRecords(sortedPayments);
         toast({
             title: "Payment Added",
-            description: `Payment of ${amount} PKR for ${item} has been recorded.`
+            description: `Payment of ${payment.amount} PKR for ${payment.item} has been recorded.`
         })
       } catch (e) {
         toast({
@@ -164,8 +171,8 @@ export default function Dashboard() {
       setPaymentState({ item: null, amount: 0 });
   }
   
-  const filteredRecords = useMemo(() => {
-    let result = records;
+  const filteredDeliveryRecords = useMemo(() => {
+    let result = deliveryRecords;
 
     const fromDate = dateRange.from ? new Date(dateRange.from.setHours(0, 0, 0, 0)) : null;
     const toDate = dateRange.to ? new Date(dateRange.to.setHours(23, 59, 59, 999)) : null;
@@ -177,43 +184,59 @@ export default function Dashboard() {
         return true;
     });
 
+    if (itemFilter !== 'all') {
+      return result.filter((record) => record.item === itemFilter);
+    }
     return result;
-  }, [records, dateRange]);
+  }, [deliveryRecords, dateRange, itemFilter]);
 
-  const deliveryRecords = useMemo(() => {
-    const nonPaidRecords = filteredRecords.filter(r => r.status !== 'paid');
-    if (itemFilter !== 'all') {
-      return nonPaidRecords.filter((record) => record.item === itemFilter);
-    }
-    return nonPaidRecords;
-  }, [filteredRecords, itemFilter]);
+  const filteredPaymentRecords = useMemo(() => {
+    let result = paymentRecords;
 
-  const paymentRecords = useMemo(() => {
-    const paidRecords = filteredRecords.filter(r => r.status === 'paid');
+    const fromDate = dateRange.from ? new Date(dateRange.from.setHours(0, 0, 0, 0)) : null;
+    const toDate = dateRange.to ? new Date(dateRange.to.setHours(23, 59, 59, 999)) : null;
+
+    result = result.filter((record) => {
+        const recordDate = new Date(record.date);
+        if (fromDate && recordDate < fromDate) return false;
+        if (toDate && recordDate > toDate) return false;
+        return true;
+    });
+
     if (itemFilter !== 'all') {
-      return paidRecords.filter((record) => record.item === itemFilter);
+      return result.filter((record) => record.item === itemFilter);
     }
-    return paidRecords;
-  }, [filteredRecords, itemFilter]);
+    return result;
+  }, [paymentRecords, dateRange, itemFilter]);
+
 
   const summary = useMemo(() => {
     if (!isMounted) {
         return {
             totals: { milk: 0, water: 0, 'house-cleaning': 0, gardener: 0 },
             bill: { milkBill: 0, waterBill: 0, houseCleaningBill: 0, gardenerBill: 0 },
-            allRecordsBill: { milkBill: 0, waterBill: 0, houseCleaningBill: 0, gardenerBill: 0 },
+            totalBill: { milkBill: 0, waterBill: 0, houseCleaningBill: 0, gardenerBill: 0 },
             daysWithoutDelivery: { milk: null, water: null, houseCleaning: null, gardener: null }
         };
     }
-    const totals = calculateTotals(filteredRecords.filter(r => r.status !== 'paid'));
-    const bill = calculateBill(totals, rates);
-
-    const allRecordsTotals = calculateTotals(records);
-    const allRecordsBill = calculateBill(allRecordsTotals, rates);
+    // Bill for the selected period
+    const periodTotals = calculateTotals(filteredDeliveryRecords);
+    const periodBill = calculateBill(periodTotals, rates);
     
-    const daysWithoutDelivery = calculateDaysWithoutDelivery(records);
-    return { totals, bill, allRecordsBill, daysWithoutDelivery };
-  }, [filteredRecords, isMounted, rates, records]);
+    // Total outstanding bill
+    const allDeliveriesTotals = calculateTotals(deliveryRecords);
+    const allDeliveriesBill = calculateBill(allDeliveriesTotals, rates);
+    const allPayments = calculatePayments(paymentRecords);
+    const totalBill = {
+        milkBill: allDeliveriesBill.milkBill - allPayments.milk,
+        waterBill: allDeliveriesBill.waterBill - allPayments.water,
+        houseCleaningBill: allDeliveriesBill.houseCleaningBill - allPayments['house-cleaning'],
+        gardenerBill: allDeliveriesBill.gardenerBill - allPayments.gardener,
+    };
+    
+    const daysWithoutDelivery = calculateDaysWithoutDelivery(deliveryRecords);
+    return { totals: periodTotals, bill: periodBill, totalBill: totalBill, daysWithoutDelivery };
+  }, [filteredDeliveryRecords, isMounted, rates, deliveryRecords, paymentRecords]);
   
   if (isLoading && !isMounted) {
     return (
@@ -247,8 +270,8 @@ export default function Dashboard() {
             value={`${summary.totals.milk.toFixed(2)} KG`}
             icon={<MilkIcon className="h-6 w-6 text-muted-foreground" />}
             bill={summary.bill.milkBill}
-            totalBill={summary.allRecordsBill.milkBill}
-            onSettleBill={() => setPaymentState({ item: 'milk', amount: summary.allRecordsBill.milkBill })}
+            totalBill={summary.totalBill.milkBill}
+            onSettleBill={() => setPaymentState({ item: 'milk', amount: summary.totalBill.milkBill })}
             className="bg-accent/20"
           />
           <SummaryCard
@@ -256,8 +279,8 @@ export default function Dashboard() {
             value={`${summary.totals.water.toFixed(2)} Bottles`}
             icon={<Droplets className="h-6 w-6 text-muted-foreground" />}
             bill={summary.bill.waterBill}
-            totalBill={summary.allRecordsBill.waterBill}
-            onSettleBill={() => setPaymentState({ item: 'water', amount: summary.allRecordsBill.waterBill })}
+            totalBill={summary.totalBill.waterBill}
+            onSettleBill={() => setPaymentState({ item: 'water', amount: summary.totalBill.waterBill })}
             className="bg-primary/20"
           />
           <SummaryCard
@@ -265,8 +288,8 @@ export default function Dashboard() {
             value={`${summary.totals['house-cleaning']} visits`}
             icon={<Home className="h-6 w-6 text-muted-foreground" />}
             bill={summary.bill.houseCleaningBill}
-            totalBill={summary.allRecordsBill.houseCleaningBill}
-            onSettleBill={() => setPaymentState({ item: 'house-cleaning', amount: summary.allRecordsBill.houseCleaningBill })}
+            totalBill={summary.totalBill.houseCleaningBill}
+            onSettleBill={() => setPaymentState({ item: 'house-cleaning', amount: summary.totalBill.houseCleaningBill })}
             className="bg-green-500/20"
           />
           <SummaryCard
@@ -274,8 +297,8 @@ export default function Dashboard() {
             value={`${summary.totals.gardener} visits`}
             icon={<Flower className="h-6 w-6 text-muted-foreground" />}
             bill={summary.bill.gardenerBill}
-            totalBill={summary.allRecordsBill.gardenerBill}
-            onSettleBill={() => setPaymentState({ item: 'gardener', amount: summary.allRecordsBill.gardenerBill })}
+            totalBill={summary.totalBill.gardenerBill}
+            onSettleBill={() => setPaymentState({ item: 'gardener', amount: summary.totalBill.gardenerBill })}
             className="bg-purple-500/20"
           />
         </div>
@@ -293,8 +316,8 @@ export default function Dashboard() {
                 </TabsList>
                 <TabsContent value="deliveries">
                   <DeliveriesTable 
-                    records={deliveryRecords} 
-                    onRemoveRecord={handleRemoveRecord} 
+                    records={filteredDeliveryRecords} 
+                    onRemoveRecord={handleRemoveDeliveryRecord} 
                     onEditRecord={setEditingRecord}
                     filter={itemFilter}
                     onFilterChange={setItemFilter}
@@ -302,9 +325,8 @@ export default function Dashboard() {
                 </TabsContent>
                 <TabsContent value="payments">
                     <PaymentsHistoryTable
-                      records={paymentRecords}
-                      rates={rates}
-                      onRemoveRecord={handleRemoveRecord}
+                      records={filteredPaymentRecords}
+                      onRemoveRecord={handleRemovePaymentRecord}
                       filter={itemFilter}
                       onFilterChange={setItemFilter}
                     />

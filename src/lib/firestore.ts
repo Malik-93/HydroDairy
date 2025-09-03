@@ -14,10 +14,11 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore';
-import type { DeliveryRecord, Rates } from './types';
+import type { DeliveryRecord, PaymentRecord, Rates } from './types';
 import { DEFAULT_RATES } from './constants';
 
 const DELIVERY_RECORDS_COLLECTION = 'deliveryRecords';
+const PAYMENTS_COLLECTION = 'payments';
 const RATES_DOCUMENT = 'rates';
 
 // Firestore data structure might differ from client-side types
@@ -25,11 +26,17 @@ type FirestoreDeliveryRecord = {
   date: Timestamp;
   item: 'milk' | 'water' | 'house-cleaning' | 'gardener';
   quantity: number;
-  status: 'delivered' | 'returned' | 'paid';
+  status: 'delivered' | 'returned';
 };
 
+type FirestorePaymentRecord = {
+    date: Timestamp;
+    item: 'milk' | 'water' | 'house-cleaning' | 'gardener';
+    amount: number;
+}
+
 // Converts a Firestore doc to a client-side DeliveryRecord
-const fromFirestore = (doc: any): DeliveryRecord => {
+const deliveryFromFirestore = (doc: any): DeliveryRecord => {
   const data = doc.data();
   return {
     id: doc.id,
@@ -40,10 +47,20 @@ const fromFirestore = (doc: any): DeliveryRecord => {
   };
 };
 
+const paymentFromFirestore = (doc: any): PaymentRecord => {
+    const data = doc.data();
+    return {
+        id: doc.id,
+        date: data.date.toDate().toISOString(),
+        item: data.item,
+        amount: data.amount,
+    }
+}
+
 export const getDeliveryRecords = async (): Promise<DeliveryRecord[]> => {
   const q = query(collection(db, DELIVERY_RECORDS_COLLECTION), orderBy('date', 'desc'));
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(fromFirestore);
+  return querySnapshot.docs.map(deliveryFromFirestore);
 };
 
 export const addDeliveryRecord = async (record: Omit<DeliveryRecord, 'id'>) => {
@@ -70,20 +87,43 @@ export const deleteDeliveryRecord = async (id: string) => {
   await deleteDoc(docRef);
 };
 
-export const deleteRecordsByItem = async (item: string) => {
-    const q = query(collection(db, DELIVERY_RECORDS_COLLECTION), where('item', '==', item));
+export const getPaymentRecords = async (): Promise<PaymentRecord[]> => {
+    const q = query(collection(db, PAYMENTS_COLLECTION), orderBy('date', 'desc'));
     const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(paymentFromFirestore);
+}
+
+export const addPaymentRecord = async (record: Omit<PaymentRecord, 'id'>) => {
+    const docRef = await addDoc(collection(db, PAYMENTS_COLLECTION), {
+        date: Timestamp.fromDate(new Date(record.date)),
+        item: record.item,
+        amount: record.amount,
+    });
+    return docRef.id;
+}
+
+export const deletePaymentRecord = async (id: string) => {
+    const docRef = doc(db, PAYMENTS_COLLECTION, id);
+    await deleteDoc(docRef);
+}
+
+
+export const deleteRecordsByItem = async (item: string) => {
+    const deliveryQuery = query(collection(db, DELIVERY_RECORDS_COLLECTION), where('item', '==', item));
+    const paymentQuery = query(collection(db, PAYMENTS_COLLECTION), where('item', '==', item));
     
-    if (querySnapshot.empty) {
-        return;
-    }
+    const [deliverySnapshot, paymentSnapshot] = await Promise.all([
+        getDocs(deliveryQuery),
+        getDocs(paymentQuery)
+    ]);
 
     const batch = writeBatch(db);
-    querySnapshot.docs.forEach(doc => {
-        batch.delete(doc.ref);
-    });
+    deliverySnapshot.docs.forEach(doc => batch.delete(doc.ref));
+    paymentSnapshot.docs.forEach(doc => batch.delete(doc.ref));
 
-    await batch.commit();
+    if (!deliverySnapshot.empty || !paymentSnapshot.empty) {
+        await batch.commit();
+    }
 }
 
 export const getRates = async (): Promise<Rates | null> => {

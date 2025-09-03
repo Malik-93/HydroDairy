@@ -1,7 +1,7 @@
 
 "use client"
 
-import type { DeliveryRecord, Rates } from '@/lib/types';
+import type { PaymentRecord } from '@/lib/types';
 import { format } from 'date-fns';
 import { Trash2, Droplets, Home, Flower } from 'lucide-react';
 import { MilkIcon } from './icons';
@@ -24,14 +24,13 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type PaymentsHistoryTableProps = {
-  records: DeliveryRecord[];
-  rates: Rates;
+  records: PaymentRecord[];
   onRemoveRecord: (id: string) => void;
   filter: string;
   onFilterChange: (value: string) => void;
 };
 
-const getItemIcon = (item: DeliveryRecord['item']) => {
+const getItemIcon = (item: PaymentRecord['item']) => {
   switch (item) {
     case 'milk':
       return <MilkIcon className="h-3 w-3" />;
@@ -46,15 +45,8 @@ const getItemIcon = (item: DeliveryRecord['item']) => {
   }
 }
 
-export function PaymentsHistoryTable({ records, rates, onRemoveRecord, filter, onFilterChange }: PaymentsHistoryTableProps) {
+export function PaymentsHistoryTable({ records, onRemoveRecord, filter, onFilterChange }: PaymentsHistoryTableProps) {
   
-  const getPaidAmount = (record: DeliveryRecord) => {
-    const rate = rates[record.item] || 0;
-    // payment quantity is negative
-    const amount = Math.abs(record.quantity) * rate;
-    return amount.toFixed(2);
-  }
-
   return (
     <Card>
       <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -99,7 +91,7 @@ export function PaymentsHistoryTable({ records, rates, onRemoveRecord, filter, o
                         {record.item.replace('-', ' ')}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">{getPaidAmount(record)} PKR</TableCell>
+                    <TableCell className="text-right">{record.amount.toFixed(2)} PKR</TableCell>
                     <TableCell className="text-right">
                        <AlertDialog>
                         <AlertDialogTrigger asChild>
