@@ -17,13 +17,14 @@ import { DeliveriesTable } from './DeliveriesTable';
 import { SummaryCard } from './SummaryCard';
 import { ReminderCard } from './ReminderCard';
 import { MilkIcon } from './icons';
-import { Droplets, Home, Flower, Settings, Trash2 } from 'lucide-react';
+import { Droplets, Home, Flower, Settings } from 'lucide-react';
 import { EditDeliveryDialog } from './EditDeliveryDialog';
 import { AddPaymentDialog } from './AddPaymentDialog';
 import { useToast } from '@/hooks/use-toast';
 import { DEFAULT_RATES } from '@/lib/constants';
 import Link from 'next/link';
 import { Button } from './ui/button';
+import { startOfMonth } from 'date-fns';
 
 export default function Dashboard() {
   const [isMounted, setIsMounted] = useState(false);
@@ -33,6 +34,10 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [rates, setRates] = useState<Rates>(DEFAULT_RATES);
   const [itemFilter, setItemFilter] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
+    from: startOfMonth(new Date()),
+    to: new Date(),
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -152,11 +157,23 @@ export default function Dashboard() {
   }
   
   const filteredRecords = useMemo(() => {
-    if (itemFilter === 'all') {
-      return records;
+    let result = records;
+    if (itemFilter !== 'all') {
+      result = result.filter((record) => record.item === itemFilter);
     }
-    return records.filter((record) => record.item === itemFilter);
-  }, [records, itemFilter]);
+
+    const fromDate = dateRange.from ? new Date(dateRange.from.setHours(0, 0, 0, 0)) : null;
+    const toDate = dateRange.to ? new Date(dateRange.to.setHours(23, 59, 59, 999)) : null;
+
+    result = result.filter((record) => {
+        const recordDate = new Date(record.date);
+        if (fromDate && recordDate < fromDate) return false;
+        if (toDate && recordDate > toDate) return false;
+        return true;
+    });
+
+    return result;
+  }, [records, itemFilter, dateRange]);
   
   const summary = useMemo(() => {
     if (!isMounted) {
@@ -239,6 +256,8 @@ export default function Dashboard() {
                 onEditRecord={setEditingRecord}
                 filter={itemFilter}
                 onFilterChange={setItemFilter}
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
               />
             </div>
         </div>

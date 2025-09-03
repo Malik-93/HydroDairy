@@ -2,7 +2,7 @@
 
 import type { DeliveryRecord } from '@/lib/types';
 import { format } from 'date-fns';
-import { Trash2, Droplets, Pencil, Home, Flower, Receipt } from 'lucide-react';
+import { Trash2, Droplets, Pencil, Home, Flower } from 'lucide-react';
 import { MilkIcon } from './icons';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -21,6 +21,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DateRangePicker } from './ui/date-range-picker';
 
 
 type DeliveriesTableProps = {
@@ -29,6 +30,8 @@ type DeliveriesTableProps = {
   onEditRecord: (record: DeliveryRecord) => void;
   filter: string;
   onFilterChange: (value: string) => void;
+  dateRange: { from: Date; to: Date };
+  onDateRangeChange: (range: { from: Date; to: Date }) => void;
 };
 
 const getItemIcon = (item: DeliveryRecord['item']) => {
@@ -59,17 +62,22 @@ const getStatusBadgeVariant = (status: DeliveryRecord['status']) => {
     }
 }
 
-export function DeliveriesTable({ records, onRemoveRecord, onEditRecord, filter, onFilterChange }: DeliveriesTableProps) {
+export function DeliveriesTable({ records, onRemoveRecord, onEditRecord, filter, onFilterChange, dateRange, onDateRangeChange }: DeliveriesTableProps) {
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
             <CardTitle>Delivery History</CardTitle>
             <CardDescription>A log of all your past deliveries and services.</CardDescription>
         </div>
-        <div className="w-48">
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+            <DateRangePicker 
+                date={dateRange}
+                onDateChange={onDateRangeChange}
+                className="w-full sm:w-auto"
+            />
             <Select value={filter} onValueChange={onFilterChange}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full sm:w-48">
                     <SelectValue placeholder="Filter by item..." />
                 </SelectTrigger>
                 <SelectContent>
