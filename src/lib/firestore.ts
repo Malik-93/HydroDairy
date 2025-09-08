@@ -27,6 +27,7 @@ type FirestoreDeliveryRecord = {
   date: Timestamp;
   item: 'milk' | 'water' | 'house-cleaning' | 'gardener';
   quantity: number;
+  billedQuantity?: number;
   status: 'delivered' | 'returned';
 };
 
@@ -46,6 +47,7 @@ const deliveryFromFirestore = (doc: any): DeliveryRecord => {
     date: data.date.toDate().toISOString(),
     item: data.item,
     quantity: data.quantity,
+    billedQuantity: data.billedQuantity,
     status: data.status || 'delivered', // Default to 'delivered' for old records
   };
 };
@@ -69,22 +71,32 @@ export const getDeliveryRecords = async (): Promise<DeliveryRecord[]> => {
 };
 
 export const addDeliveryRecord = async (record: Omit<DeliveryRecord, 'id'>) => {
-  const docRef = await addDoc(collection(db, DELIVERY_RECORDS_COLLECTION), {
-    date: Timestamp.fromDate(new Date(record.date)),
-    item: record.item,
-    quantity: record.quantity,
-    status: record.status,
-  });
+  const { billedQuantity, ...rest } = record;
+  const recordToAdd: Omit<DeliveryRecord, 'id' | 'billedQuantity'> & {billedQuantity?: number} = {
+    ...rest,
+    date: Timestamp.fromDate(new Date(record.date)) as any,
+  }
+  if (billedQuantity !== undefined) {
+    recordToAdd.billedQuantity = billedQuantity;
+  }
+  const docRef = await addDoc(collection(db, DELIVERY_RECORDS_COLLECTION), recordToAdd);
   return docRef.id;
 };
 
 export const updateDeliveryRecord = async (record: DeliveryRecord) => {
   const docRef = doc(db, DELIVERY_RECORDS_COLLECTION, record.id);
   const { id, ...dataToUpdate } = record;
-  await updateDoc(docRef, {
-    ...dataToUpdate,
-    date: Timestamp.fromDate(new Date(dataToUpdate.date)),
-  });
+  
+  const updateData: Partial<FirestoreDeliveryRecord> = {
+      ...dataToUpdate,
+      date: Timestamp.fromDate(new Date(dataToUpdate.date)),
+  }
+
+  if (dataToUpdate.billedQuantity === undefined || dataToUpdate.billedQuantity === null || isNaN(dataToUpdate.billedQuantity)) {
+    delete updateData.billedQuantity;
+  }
+
+  await updateDoc(docRef, updateData);
 };
 
 export const deleteDeliveryRecord = async (id: string) => {

@@ -5,8 +5,10 @@ import { differenceInDays, parseISO, startOfToday } from 'date-fns';
 export const calculateTotals = (records: DeliveryRecord[]) => {
   return records.reduce(
     (acc, record) => {
-      // payment is stored as negative quantity
-      const quantity = record.status === 'returned' ? -Math.abs(record.quantity) : Math.abs(record.quantity);
+      // Use billedQuantity if available, otherwise fallback to quantity
+      const billableQuantity = record.billedQuantity ?? record.quantity;
+      const quantity = record.status === 'returned' ? -Math.abs(billableQuantity) : Math.abs(billableQuantity);
+      
       if (record.item === 'milk') {
         acc.milk += quantity;
       } else if (record.item === 'water') {

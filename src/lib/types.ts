@@ -5,6 +5,7 @@ export interface DeliveryRecord {
   date: string; // ISO date format string
   item: Item;
   quantity: number; // in liters or visits
+  billedQuantity?: number; // optional, for invoice reconciliation
   status: 'delivered' | 'returned';
 }
 

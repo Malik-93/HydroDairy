@@ -3,7 +3,7 @@
 
 import type { DeliveryRecord } from '@/lib/types';
 import { format } from 'date-fns';
-import { Trash2, Droplets, Pencil, Home, Flower } from 'lucide-react';
+import { Trash2, Droplets, Pencil, Home, Flower, Info } from 'lucide-react';
 import { MilkIcon } from './icons';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -22,6 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 type DeliveriesTableProps = {
   records: DeliveryRecord[];
@@ -56,6 +57,33 @@ const getStatusBadgeVariant = (status: DeliveryRecord['status']) => {
             return 'secondary';
     }
 }
+
+const QuantityDisplay = ({ record }: { record: DeliveryRecord }) => {
+  const isBilledDifferent = record.billedQuantity !== undefined && record.billedQuantity !== record.quantity;
+  const displayQuantity = (record.billedQuantity ?? record.quantity).toFixed(record.item === 'milk' || record.item === 'water' ? 2 : 0);
+
+  if (isBilledDifferent) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>
+            <div className="flex items-center justify-end gap-1 cursor-help">
+              <span>{displayQuantity}</span>
+              <Info className="h-3 w-3 text-muted-foreground" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Billed: {record.billedQuantity?.toFixed(2)}</p>
+            <p>Delivered: {record.quantity.toFixed(2)}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return <span>{displayQuantity}</span>;
+}
+
 
 export function DeliveriesTable({ records, onRemoveRecord, onEditRecord, filter, onFilterChange }: DeliveriesTableProps) {
   return (
@@ -108,7 +136,9 @@ export function DeliveriesTable({ records, onRemoveRecord, onEditRecord, filter,
                         {record.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">{record.quantity.toFixed(record.item === 'milk' || record.item === 'water' ? 2 : 0)}</TableCell>
+                    <TableCell className="text-right">
+                      <QuantityDisplay record={record} />
+                    </TableCell>
                     <TableCell className="text-right">
                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => onEditRecord(record)}>
                           <Pencil className="h-4 w-4" />

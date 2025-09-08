@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { format } from "date-fns"
-import { CalendarIcon, Droplets, Home, Flower } from "lucide-react"
+import { CalendarIcon, Droplets, Home, Flower, Info } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils"
 import type { DeliveryRecord } from "@/lib/types"
 import { MilkIcon } from "./icons"
 import { useEffect } from "react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 
 const formSchema = z.object({
   date: z.date({
@@ -30,6 +31,7 @@ const formSchema = z.object({
   quantity: z.coerce.number().min(0.1, {
     message: "Quantity must be greater than 0.",
   }),
+  billedQuantity: z.coerce.number().optional(),
   status: z.enum(["delivered", "returned"]),
 });
 
@@ -47,6 +49,7 @@ export function EditDeliveryDialog({ record, onUpdateRecord, onOpenChange }: Edi
       date: new Date(record.date),
       item: record.item,
       quantity: record.quantity,
+      billedQuantity: record.billedQuantity,
       status: record.status,
     },
   });
@@ -56,6 +59,7 @@ export function EditDeliveryDialog({ record, onUpdateRecord, onOpenChange }: Edi
       date: new Date(record.date),
       item: record.item,
       quantity: Math.abs(record.quantity), // show positive number in form
+      billedQuantity: record.billedQuantity,
       status: record.status,
     });
   }, [record, form]);
@@ -65,7 +69,8 @@ export function EditDeliveryDialog({ record, onUpdateRecord, onOpenChange }: Edi
       ...record,
       ...values,
       date: values.date.toISOString(),
-      quantity: values.quantity
+      quantity: values.quantity,
+      billedQuantity: values.billedQuantity || undefined,
     };
     await onUpdateRecord(updatedRecord);
     toast({
@@ -194,20 +199,48 @@ export function EditDeliveryDialog({ record, onUpdateRecord, onOpenChange }: Edi
                     </FormItem>
                 )}
                 />
-
-                <FormField
-                control={form.control}
-                name="quantity"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Quantity / Visits</FormLabel>
-                    <FormControl>
-                        <Input type="number" step="1" placeholder="e.g., 1.5" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                  control={form.control}
+                  name="quantity"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>Delivered Quantity</FormLabel>
+                      <FormControl>
+                          <Input type="number" step="1" placeholder="e.g., 1.5" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+                  />
+                  <FormField
+                  control={form.control}
+                  name="billedQuantity"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>
+                        <div className="flex items-center gap-1">
+                          Billed Quantity
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 cursor-pointer"/>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Leave empty to use delivered quantity.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </FormLabel>
+                      <FormControl>
+                          <Input type="number" step="1" placeholder="e.g., 1.0" {...field} value={field.value ?? ''}/>
+                      </FormControl>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+                  />
+                </div>
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
                     <Button type="submit" className="transition-all duration-300" disabled={form.formState.isSubmitting}>
